@@ -24,6 +24,11 @@
     <!-- HanziWriter JS for Stroke Order Animation & Guided Writing Practice -->
     <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
 
+    <!-- ═══════════════════════════════════════════════════════════════
+         [CẤU HÌNH] Khai báo màu Tailwind mặc định (brand, accent, mint)
+         và font chữ. KHÔNG PHẢI nơi chỉnh layout hay đổi theme màu thật
+         sự đang chạy trên app — xem phần [MÀU SẮC - THEME] bên dưới.
+         ═══════════════════════════════════════════════════════════════ -->
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -70,6 +75,12 @@
         }
     </script>
 
+    <!-- ═══════════════════════════════════════════════════════════════
+         [HIỆU ỨNG + MÀU MẶC ĐỊNH] Animation lật thẻ, thanh cuộn, gradient
+         nền... Có hex màu viết cứng ở đây (áp dụng khi CHƯA chọn theme
+         nào / theme mặc định). Muốn đổi màu cho MỌI theme thì sửa ở
+         [MÀU SẮC - THEME] bên dưới, không sửa ở đây.
+         ═══════════════════════════════════════════════════════════════ -->
     <style>
         /* 3D Card Flip Animation */
         .perspective-1000 {
@@ -863,6 +874,16 @@
     } catch(e) {}
   })();
 </script>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     [MÀU SẮC - THEME] ĐÂY LÀ NƠI CHỈNH MÀU CHÍNH CỦA APP.
+     Gồm 7 bộ theme: mint, mudan, meigui, lotus, baihe, huangju, xunyicao.
+     Mỗi theme là 1 khối "html[data-theme="ten-theme"] { --color-...: #hex; }"
+     Muốn đổi tông màu của 1 theme -> tìm đúng khối data-theme đó,
+     sửa các biến --color-primary / --color-accent / --color-bg-main...
+     (Tên style id "theme-mint-overrides" hơi gây nhầm vì nó chứa TẤT CẢ
+     theme chứ không riêng "mint" — chỉ là tên đặt lúc đầu.)
+     ═══════════════════════════════════════════════════════════════════ -->
 <style id="theme-mint-overrides">
   /* ============================================================
      THEME 2: "Mint" — bảng màu xanh bạc hà theo yêu cầu người dùng
@@ -1849,6 +1870,16 @@
   }
 </style>
 </head>
+<!-- ═══════════════════════════════════════════════════════════════════
+     [BỐ CỤC / GIAO DIỆN - HTML] Từ đây trở xuống là cấu trúc màn hình:
+     header, các "mode" (trang chủ, flashcard, quiz, viết chữ...), và
+     các modal (thêm từ, cài đặt, import excel...). Class kiểu
+     "px-4 py-2 rounded-xl gap-2 flex" = bố cục/khoảng cách/kích thước.
+     Class kiểu "bg-brand-500 text-white border-brand-200" = màu sắc
+     (nhưng màu THẬT SỰ hiển thị do theme ở trên ghi đè !important).
+     Muốn sửa vị trí/kích thước 1 khối -> tìm trong phần này bằng Ctrl+F
+     theo chữ tiếng Việt hiển thị trên UI (vd: "Cài Đặt Hiển Thị").
+     ═══════════════════════════════════════════════════════════════════ -->
 <body class="bg-soft-gradient text-brand-950 font-sans min-h-screen flex flex-col selection:bg-accent-200 selection:text-accent-800">
 
     <!-- Màn hình đăng nhập / loading / từ chối -->
@@ -2945,6 +2976,13 @@
         <span id="toast-message" class="text-sm font-semibold">Đã cập nhật dữ liệu!</span>
     </div>
 
+    <!-- ═══════════════════════════════════════════════════════════════
+         [CHỨC NĂNG - JS CHÍNH] Toàn bộ logic app: đọc dữ liệu Excel,
+         flashcard, phát âm, quiz, luyện viết, thống kê, cài đặt...
+         KHÔNG PHẢI chỗ chỉnh layout hay màu — chỉ chỉnh khi muốn đổi
+         CÁCH HOẠT ĐỘNG (vd: đổi thời gian tự động chuyển thẻ, thêm
+         tính năng mới, sửa logic tính điểm...).
+         ═══════════════════════════════════════════════════════════════ -->
     <script>
         // Dữ liệu dự phòng tối thiểu — chỉ dùng khi KHÔNG tải được Tu vung.xlsx
         // (ví dụ: mở file trực tiếp qua file:// thay vì host qua http/https, hoặc thiếu file trên GitHub)
@@ -5700,7 +5738,16 @@
         }
     </script>
 
-<!-- ===== GRAMMAR MODAL ===== -->
+<!-- ═══════════════════════════════════════════════════════════════════
+     [MODULE RIÊNG: NGỮ PHÁP] Đây là 1 khối tự lập (layout + CSS + JS
+     riêng, ít dùng chung class Tailwind như phần trên). Gồm:
+       - Bố cục (HTML) ngay dưới đây: khung modal, thanh tìm kiếm, nav
+       - Chức năng (JS) ở khối script bắt đầu vài trăm dòng dưới,
+         chứa toàn bộ dữ liệu ngữ pháp HSK/Boya và logic hiển thị/tìm.
+     Muốn chỉnh riêng phần "Ngữ pháp" thì tìm trong khối này, đừng lẫn
+     với phần flashcard/quiz chính ở trên.
+     ═══════════════════════════════════════════════════════════════════ -->
+<!-- ===== GRAMMAR MODAL (bố cục) ===== -->
 <div id="grammar-modal-overlay">
     <button id="grammar-close-btn" title="Đóng Ngữ pháp">✕</button>
     <div id="grammar-modal-inner">
@@ -5745,6 +5792,7 @@
 
 <footer>坚持就是胜利 · Kiên trì chính là chiến thắng — mỗi điểm ngữ pháp bạn học hôm nay là một bước tiến gần hơn đến trình độ HSK mơ ước. Cố lên nhé! 加油！</footer>
 
+<!-- ===== GRAMMAR MODAL (chức năng: dữ liệu + logic JS) ===== -->
 <script>
 const HSK_DATA = [
 {level:1, levelName:"HSK 1", sub:"Sơ nhập môn · Boya Sơ cấp Khởi điểm", items:[
@@ -6954,6 +7002,13 @@ render();
     </div>
 </div>
 
+<!-- ═══════════════════════════════════════════════════════════════════
+     [CHỨC NĂNG - ĐỔI THEME] Không phải nơi định nghĩa MÀU, chỉ là logic
+     BẤM NÚT NÀO THÌ GÁN data-theme="..." vào thẻ <html>. Màu thật sự
+     nằm ở khối [MÀU SẮC - THEME] gần đầu file (id="theme-mint-overrides").
+     Nếu bạn thêm 1 theme màu mới ở trên, phải thêm tên theme đó vào
+     mảng THEMES bên dưới thì mới chọn được trong app.
+     ═══════════════════════════════════════════════════════════════════ -->
 <script>
 // Chuyển đổi giao diện màu sắc (theme) — bấm vào logo trên cùng bên trái
 (function() {
