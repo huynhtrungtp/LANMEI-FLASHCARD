@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lanmei Hán Ngữ - Học Từ Vựng & Rèn Viết Chữ Hán</title>
-    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
-<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-<link rel="shortcut icon" href="/favicon.ico" />
-<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-<link rel="manifest" href="/site.webmanifest" />
+    <link rel="icon" type="image/png" href="favicon-96x96.png" sizes="96x96" />
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<link rel="shortcut icon" href="favicon.ico" />
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+<link rel="manifest" href="site.webmanifest" />
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -889,6 +889,34 @@
     background: linear-gradient(to bottom, #AEDCAE 0%, #ECFADC 100%) !important;
   }
 
+  /* Nền các màn hình (Trang chủ, Flashcard, Luyện tập...): dùng "nen xanh.png" */
+  html[data-theme="mint"] #mode-home,
+  html[data-theme="mint"] #mode-flashcard,
+  html[data-theme="mint"] #mode-exercises,
+  html[data-theme="mint"] #mode-quiz,
+  html[data-theme="mint"] #mode-listening,
+  html[data-theme="mint"] #mode-translate,
+  html[data-theme="mint"] #mode-writing,
+  html[data-theme="mint"] #mode-dictionary {
+    background-image: linear-gradient(rgba(255,255,255,0.5), rgba(255,255,255,0.5)), url('nen xanh.png') !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    border-radius: 1.5rem !important;
+    padding: 1.5rem !important;
+  }
+  /* Khung ảnh Hero: chỉ theme JinQiu dùng "nu xanh.png", các theme khác giữ ảnh mặc định */
+  html[data-theme="mint"] #hero-image {
+    content: url('nu xanh.png') !important;
+  }
+  /* Trang chủ trên iPad/điện thoại (≤1024px): thu nhỏ ảnh nền lại để thấy trọn vẹn, không bị phóng to cắt cúp */
+  @media (max-width: 1024px) {
+    html[data-theme="mint"] #mode-home {
+      background-size: contain !important;
+      background-color: #D4EDD4 !important;
+    }
+  }
+
   /* Thanh header trên cùng — dùng màu riêng thay vì màu nền thẻ chung */
   html[data-theme="mint"] header.sticky {
     background: rgba(255,255,255,0.92) !important;
@@ -965,6 +993,10 @@
     background-repeat: no-repeat !important;
     border-radius: 1.5rem !important;
     padding: 1.5rem !important;
+  }
+  /* Khung ảnh Hero: chỉ theme MuDan dùng "nu do.png", các theme khác giữ ảnh mặc định */
+  html[data-theme="mudan"] #hero-image {
+    content: url('nu do.png') !important;
   }
   /* Trang chủ trên iPad/điện thoại (≤1024px): thu nhỏ ảnh nền lại để thấy trọn vẹn hoa mẫu đơn, không bị phóng to cắt cúp */
   @media (max-width: 1024px) {
@@ -1054,6 +1086,38 @@
   html[data-theme="mudan"] [class~="to-brand-400"] { --tw-gradient-to: var(--color-primary) !important; }
 
   /* ============================================================
+     THEME: "LanXing" — xanh lam (theme mặc định, không có data-theme)
+     Vì applyTheme() xóa hẳn thuộc tính data-theme khi chọn "default",
+     nên dùng selector html:not([data-theme]) để nhắm đúng theme này.
+     ============================================================ */
+  html:not([data-theme]) #mode-home,
+  html:not([data-theme]) #mode-flashcard,
+  html:not([data-theme]) #mode-exercises,
+  html:not([data-theme]) #mode-quiz,
+  html:not([data-theme]) #mode-listening,
+  html:not([data-theme]) #mode-translate,
+  html:not([data-theme]) #mode-writing,
+  html:not([data-theme]) #mode-dictionary {
+    background-image: linear-gradient(rgba(255,255,255,0.5), rgba(255,255,255,0.5)), url('nen lam.png') !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    border-radius: 1.5rem !important;
+    padding: 1.5rem !important;
+  }
+  /* Khung ảnh Hero: chỉ theme LanXing dùng "nu lam.png", các theme khác giữ ảnh mặc định */
+  html:not([data-theme]) #hero-image {
+    content: url('nu lam.png') !important;
+  }
+  /* Trang chủ trên iPad/điện thoại (≤1024px): thu nhỏ ảnh nền lại để thấy trọn vẹn, không bị phóng to cắt cúp */
+  @media (max-width: 1024px) {
+    html:not([data-theme]) #mode-home {
+      background-size: contain !important;
+      background-color: #e0f2fe !important;
+    }
+  }
+
+  /* ============================================================
      THEME: "BaiHe" — cam
      ============================================================ */
   html[data-theme="baihe"] {
@@ -1073,8 +1137,31 @@
   html[data-theme="baihe"] .bg-soft-gradient {
     background: linear-gradient(135deg, #fed7aa 0%, #ffedd5 50%, #fed7aa 100%) !important;
   }
-  html[data-theme="baihe"] #mode-home {
-    background-image: linear-gradient(135deg, #fed7aa 0%, #ffedd5 50%, #fed7aa 100%) !important;
+  html[data-theme="baihe"] #mode-home,
+  html[data-theme="baihe"] #mode-flashcard,
+  html[data-theme="baihe"] #mode-exercises,
+  html[data-theme="baihe"] #mode-quiz,
+  html[data-theme="baihe"] #mode-listening,
+  html[data-theme="baihe"] #mode-translate,
+  html[data-theme="baihe"] #mode-writing,
+  html[data-theme="baihe"] #mode-dictionary {
+    background-image: linear-gradient(rgba(255,255,255,0.5), rgba(255,255,255,0.5)), url('nen cam.png') !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    border-radius: 1.5rem !important;
+    padding: 1.5rem !important;
+  }
+  /* Khung ảnh Hero: chỉ theme BaiHe dùng "nu cam.png" */
+  html[data-theme="baihe"] #hero-image {
+    content: url('nu cam.png') !important;
+  }
+  /* Trang chủ trên iPad/điện thoại (≤1024px): thu nhỏ ảnh nền lại để thấy trọn vẹn, không bị phóng to cắt cúp */
+  @media (max-width: 1024px) {
+    html[data-theme="baihe"] #mode-home {
+      background-size: contain !important;
+      background-color: #ffedd5 !important;
+    }
   }
   html[data-theme="baihe"] header.sticky {
     background: color-mix(in srgb, #ffedd5 92%, transparent) !important;
@@ -1176,8 +1263,31 @@
   html[data-theme="huangju"] .bg-soft-gradient {
     background: linear-gradient(135deg, #fef08a 0%, #fefce8 50%, #fef08a 100%) !important;
   }
-  html[data-theme="huangju"] #mode-home {
-    background-image: linear-gradient(135deg, #fef08a 0%, #fefce8 50%, #fef08a 100%) !important;
+  html[data-theme="huangju"] #mode-home,
+  html[data-theme="huangju"] #mode-flashcard,
+  html[data-theme="huangju"] #mode-exercises,
+  html[data-theme="huangju"] #mode-quiz,
+  html[data-theme="huangju"] #mode-listening,
+  html[data-theme="huangju"] #mode-translate,
+  html[data-theme="huangju"] #mode-writing,
+  html[data-theme="huangju"] #mode-dictionary {
+    background-image: linear-gradient(rgba(255,255,255,0.5), rgba(255,255,255,0.5)), url('nen vang.png') !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    border-radius: 1.5rem !important;
+    padding: 1.5rem !important;
+  }
+  /* Khung ảnh Hero: chỉ theme HuangJu dùng "nu vang.png" */
+  html[data-theme="huangju"] #hero-image {
+    content: url('nu vang.png') !important;
+  }
+  /* Trang chủ trên iPad/điện thoại (≤1024px): thu nhỏ ảnh nền lại để thấy trọn vẹn, không bị phóng to cắt cúp */
+  @media (max-width: 1024px) {
+    html[data-theme="huangju"] #mode-home {
+      background-size: contain !important;
+      background-color: #fefce8 !important;
+    }
   }
   html[data-theme="huangju"] header.sticky {
     background: color-mix(in srgb, #fefce8 92%, transparent) !important;
@@ -1279,8 +1389,31 @@
   html[data-theme="xunyicao"] .bg-soft-gradient {
     background: linear-gradient(135deg, #ede9fe 0%, #f5f3ff 50%, #ede9fe 100%) !important;
   }
-  html[data-theme="xunyicao"] #mode-home {
-    background-image: linear-gradient(135deg, #ede9fe 0%, #f5f3ff 50%, #ede9fe 100%) !important;
+  html[data-theme="xunyicao"] #mode-home,
+  html[data-theme="xunyicao"] #mode-flashcard,
+  html[data-theme="xunyicao"] #mode-exercises,
+  html[data-theme="xunyicao"] #mode-quiz,
+  html[data-theme="xunyicao"] #mode-listening,
+  html[data-theme="xunyicao"] #mode-translate,
+  html[data-theme="xunyicao"] #mode-writing,
+  html[data-theme="xunyicao"] #mode-dictionary {
+    background-image: linear-gradient(rgba(255,255,255,0.5), rgba(255,255,255,0.5)), url('nen tim.png') !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    border-radius: 1.5rem !important;
+    padding: 1.5rem !important;
+  }
+  /* Khung ảnh Hero: chỉ theme XunYiCao dùng "nu tim.png", các theme khác giữ ảnh mặc định */
+  html[data-theme="xunyicao"] #hero-image {
+    content: url('nu tim.png') !important;
+  }
+  /* Trang chủ trên iPad/điện thoại (≤1024px): thu nhỏ ảnh nền lại để thấy trọn vẹn, không bị phóng to cắt cúp */
+  @media (max-width: 1024px) {
+    html[data-theme="xunyicao"] #mode-home {
+      background-size: contain !important;
+      background-color: #f5f3ff !important;
+    }
   }
   html[data-theme="xunyicao"] header.sticky {
     background: color-mix(in srgb, #f5f3ff 92%, transparent) !important;
@@ -1382,8 +1515,31 @@
   html[data-theme="meigui"] .bg-soft-gradient {
     background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%) !important;
   }
-  html[data-theme="meigui"] #mode-home {
-    background-image: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%) !important;
+  html[data-theme="meigui"] #mode-home,
+  html[data-theme="meigui"] #mode-flashcard,
+  html[data-theme="meigui"] #mode-exercises,
+  html[data-theme="meigui"] #mode-quiz,
+  html[data-theme="meigui"] #mode-listening,
+  html[data-theme="meigui"] #mode-translate,
+  html[data-theme="meigui"] #mode-writing,
+  html[data-theme="meigui"] #mode-dictionary {
+    background-image: linear-gradient(rgba(255,255,255,0.5), rgba(255,255,255,0.5)), url('nen trang.png') !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    border-radius: 1.5rem !important;
+    padding: 1.5rem !important;
+  }
+  /* Khung ảnh Hero: chỉ theme MeiGui dùng "nu trang.png" */
+  html[data-theme="meigui"] #hero-image {
+    content: url('nu trang.png') !important;
+  }
+  /* Trang chủ trên iPad/điện thoại (≤1024px): thu nhỏ ảnh nền lại để thấy trọn vẹn, không bị phóng to cắt cúp */
+  @media (max-width: 1024px) {
+    html[data-theme="meigui"] #mode-home {
+      background-size: contain !important;
+      background-color: #f1f5f9 !important;
+    }
   }
   html[data-theme="meigui"] header.sticky {
     background: color-mix(in srgb, #f1f5f9 92%, transparent) !important;
@@ -1585,13 +1741,37 @@
     background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 50%, #fce4ec 100%) !important;
   }
 
-  /* Không dùng ảnh nền hinhnen.png cho màn hình Trang chủ khi bật theme Bạc hà/Sen,
-     thay bằng gradient màu theo đúng bảng màu của từng theme */
+  /* Không dùng ảnh nền hinhnen.png cho màn hình Trang chủ khi bật theme Bạc hà,
+     thay bằng gradient màu theo đúng bảng màu của theme */
   html[data-theme="mint"] #mode-home {
     background-image: linear-gradient(to bottom, #AEDCAE 0%, #ECFADC 100%) !important;
   }
-  html[data-theme="lotus"] #mode-home {
-    background-image: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 50%, #fce4ec 100%) !important;
+
+  html[data-theme="lotus"] #mode-home,
+  html[data-theme="lotus"] #mode-flashcard,
+  html[data-theme="lotus"] #mode-exercises,
+  html[data-theme="lotus"] #mode-quiz,
+  html[data-theme="lotus"] #mode-listening,
+  html[data-theme="lotus"] #mode-translate,
+  html[data-theme="lotus"] #mode-writing,
+  html[data-theme="lotus"] #mode-dictionary {
+    background-image: linear-gradient(rgba(255,255,255,0.5), rgba(255,255,255,0.5)), url('nen hong.png') !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    border-radius: 1.5rem !important;
+    padding: 1.5rem !important;
+  }
+  /* Khung ảnh Hero: chỉ theme LianHua dùng "nu hong.png", các theme khác giữ ảnh mặc định */
+  html[data-theme="lotus"] #hero-image {
+    content: url('nu hong.png') !important;
+  }
+  /* Trang chủ trên iPad/điện thoại (≤1024px): thu nhỏ ảnh nền lại để thấy trọn vẹn, không bị phóng to cắt cúp */
+  @media (max-width: 1024px) {
+    html[data-theme="lotus"] #mode-home {
+      background-size: contain !important;
+      background-color: #f8bbd0 !important;
+    }
   }
 
   html[data-theme="lotus"] header.sticky {
@@ -1887,15 +2067,6 @@
                         </div>
                     </div>
                 </div>
-                <div class="relative hidden" id="lesson-dropdown-wrapper">
-                    <button type="button" id="lesson-dropdown-btn" class="bg-brand-50 border border-brand-200 text-brand-950 text-sm font-medium rounded-xl px-3.5 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none cursor-pointer w-full sm:w-auto min-w-[110px] flex items-center justify-between gap-2">
-                        <span id="lesson-dropdown-label">Tất cả bài</span>
-                        <i class="fa-solid fa-chevron-down text-xs text-brand-400"></i>
-                    </button>
-                    <div id="lesson-dropdown-panel" class="hidden absolute left-0 z-30 mt-1.5 w-40 bg-white border border-brand-200 rounded-xl shadow-lg py-1.5 max-h-80 overflow-y-auto">
-                        <!-- Danh sách bài được dựng động bằng JS, xem rebuildLessonDropdown() -->
-                    </div>
-                </div>
             </div>
         </div>
 
@@ -1915,8 +2086,8 @@
                             Học Tiếng Trung cùng LanMei!
                         </h2>
                     </div>
-                    <div class="w-full sm:w-72 flex-shrink-0 z-10">
-                        <img src="hinhtrangchu.png" alt="LanMei" class="w-full rounded-2xl object-cover shadow-md" onerror="this.style.display='none'">
+                    <div class="w-full sm:w-72 lg:w-96 flex-shrink-0 z-10">
+                        <img id="hero-image" src="hinhtrangchu.png" alt="LanMei" class="w-full rounded-2xl object-cover shadow-md" onerror="this.style.display='none'">
                     </div>
                 </div>
 
@@ -2753,39 +2924,49 @@
     </div>
 
     <script>
-        // Dữ liệu dự phòng tối thiểu — chỉ dùng khi KHÔNG tải được Tu_vung.xlsx
+        // Dữ liệu dự phòng tối thiểu — chỉ dùng khi KHÔNG tải được Tu vung.xlsx
         // (ví dụ: mở file trực tiếp qua file:// thay vì host qua http/https, hoặc thiếu file trên GitHub)
         const FALLBACK_VOCABULARY = [
             { id: 'fallback-1', hanzi: '你好', pinyin: 'nǐ hǎo', hanViet: 'Nhĩ Hảo', meaning: 'Xin chào', hsk: 'HSK1', category: 'Chào hỏi', exampleCn: '你好，很高兴认识你！', examplePinyin: 'Nǐ hǎo, hěn gāoxìng rènshí nǐ!', exampleVi: 'Xin chào, rất vui được quen biết bạn!' },
             { id: 'fallback-2', hanzi: '谢谢', pinyin: 'xiè xie', hanViet: 'Tạ Tạ', meaning: 'Cảm ơn', hsk: 'HSK1', category: 'Giao tiếp', exampleCn: '非常谢谢你的帮助。', examplePinyin: 'Fēicháng xièxiè nǐ de bāngzhù.', exampleVi: 'Rất cảm ơn sự giúp đỡ của bạn.' }
         ];
 
-        // Danh sách các sheet (giáo trình/cấp độ) mà app sẽ tìm trong Tu_vung.xlsx.
+        // Danh sách các sheet (giáo trình/cấp độ) mà app sẽ tìm trong Tu vung.xlsx.
         // Tên sheet trong Excel phải khớp CHÍNH XÁC (không phân biệt hoa/thường) với các mã bên dưới.
         const HSK_SHEET_NAMES = ['HSK1', 'HSK2', 'HSK3', 'HSK4', 'HSK5', 'HSK6',
             'GT_HSK1', 'GT_HSK2', 'GT_HSK3', 'GT_HSK4', 'GT_HSK5', 'GT_HSK6'];
 
-        // Tải và phân tích file Tu_vung.xlsx (đặt cùng thư mục với index.html trên GitHub).
+        // Chuẩn hóa tên sheet để so khớp linh hoạt: bỏ dấu cách, gạch dưới, gạch ngang, không phân biệt hoa/thường.
+        // Nhờ vậy sheet đặt tên "HSK 1", "HSK_1", "hsk-1", "HSK1" đều được nhận diện là cùng một mã "HSK1".
+        function normalizeSheetCode(s) {
+            return String(s || '').toLowerCase().replace(/[\s_\-]/g, '').trim();
+        }
+
+        // Tải và phân tích file Tu vung.xlsx (đặt cùng thư mục với index.html trên GitHub).
         // Mỗi sheet trong file = một giáo trình/cấp độ (VD: sheet "HSK1", sheet "GT_HSK1"...).
         // Cột trong mỗi sheet: STT | Hán tự | Pinyin | Hán Việt | Nghĩa | Ví dụ câu | Pinyin câu | Nghĩa câu | Bài (tùy chọn)
         async function loadVocabularyFromExcel() {
-            const res = await fetch('Tu_vung.xlsx');
-            if (!res.ok) throw new Error('Không tìm thấy Tu_vung.xlsx (HTTP ' + res.status + ')');
+            const res = await fetch(encodeURI('Tu vung.xlsx'));
+            if (!res.ok) throw new Error('Không tìm thấy Tu vung.xlsx (HTTP ' + res.status + ')');
             const buf = await res.arrayBuffer();
             const workbook = XLSX.read(buf, { type: 'array' });
 
             const vocab = [];
+            const unmatchedSheets = [];
+            const sheetSummary = [];
             workbook.SheetNames.forEach(sheetName => {
-                const matchedLevel = HSK_SHEET_NAMES.find(code => code.toLowerCase() === sheetName.trim().toLowerCase());
+                const matchedLevel = HSK_SHEET_NAMES.find(code => normalizeSheetCode(code) === normalizeSheetCode(sheetName));
+                if (!matchedLevel) unmatchedSheets.push(sheetName);
                 const level = matchedLevel || sheetName.trim();
                 const sheet = workbook.Sheets[sheetName];
                 const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+                let countThisSheet = 0;
 
                 rows.forEach((row, idx) => {
                     const hanzi = String(row['Hán tự'] || row['Hán Tự'] || '').trim();
                     if (!hanzi) return;
+                    countThisSheet++;
                     const bai = row['Bài'] || row['bài'] || '';
-                    const lessonNum = bai !== '' && !isNaN(Number(bai)) ? Number(bai) : null;
                     vocab.push({
                         id: `${level.toLowerCase()}-${idx + 1}`,
                         hanzi,
@@ -2794,19 +2975,25 @@
                         meaning: String(row['Nghĩa'] || '').trim(),
                         hsk: level,
                         category: bai ? `Bài ${bai}` : '',
-                        lesson: lessonNum,
                         exampleCn: String(row['Ví dụ câu'] || '').trim(),
                         examplePinyin: String(row['Pinyin câu'] || '').trim(),
                         exampleVi: String(row['Nghĩa câu'] || '').trim()
                     });
                 });
+                sheetSummary.push(`Sheet "${sheetName}" → mã "${level}"${matchedLevel ? '' : ' (KHÔNG khớp Sổ tay nào)'}: ${rows.length} dòng, ${countThisSheet} từ hợp lệ`);
             });
+
+            console.log('📊 Kết quả đọc Tu vung.xlsx:\n' + sheetSummary.join('\n'));
+
+            if (unmatchedSheets.length > 0) {
+                console.warn('Các sheet sau trong Tu vung.xlsx không khớp với bất kỳ mã Sổ tay nào (HSK1-6, GT_HSK1-6), từ vựng trong đó sẽ không xuất hiện ở Sổ tay:', unmatchedSheets);
+            }
 
             return vocab;
         }
 
         // Dựng lại danh sách các mục chọn trong "Sổ tay" (Từ vựng HSK / Giáo trình HSK 3.0)
-        // dựa trên những giáo trình THỰC SỰ có dữ liệu sau khi tải Tu_vung.xlsx —
+        // dựa trên những giáo trình THỰC SỰ có dữ liệu sau khi tải Tu vung.xlsx —
         // sheet nào không có trong file Excel sẽ tự động hiện "Sắp có".
         function rebuildHskDropdownAvailability() {
             const availableLevels = new Set(appState.vocabulary.map(v => v.hsk));
@@ -2843,36 +3030,6 @@
             }
         }
 
-        // Dựng dropdown "Chọn bài" — chỉ hiện khi đang chọn 1 giáo trình (GT_HSK...) VÀ
-        // giáo trình đó có dữ liệu cột "Bài". Với Từ vựng HSK thường / Yêu thích thì ẩn đi.
-        function rebuildLessonDropdown() {
-            const wrapper = document.getElementById('lesson-dropdown-wrapper');
-            const panel = document.getElementById('lesson-dropdown-panel');
-            const label = document.getElementById('lesson-dropdown-label');
-            if (!wrapper || !panel || !label) return;
-
-            const level = appState.currentHsk;
-            const isGiaoTrinh = typeof level === 'string' && level.startsWith('GT_HSK');
-            const lessons = isGiaoTrinh
-                ? [...new Set(appState.vocabulary.filter(v => v.hsk === level && v.lesson !== null).map(v => v.lesson))].sort((a, b) => a - b)
-                : [];
-
-            if (!isGiaoTrinh || lessons.length === 0) {
-                wrapper.classList.add('hidden');
-                appState.currentLesson = 'ALL';
-                return;
-            }
-
-            wrapper.classList.remove('hidden');
-            label.innerText = appState.currentLesson === 'ALL' ? 'Tất cả bài' : `Bài ${appState.currentLesson}`;
-
-            let html = `<button type="button" class="lesson-option w-full text-left px-3.5 py-2 text-sm text-brand-800 hover:bg-brand-50 transition rounded-lg" data-value="ALL">Tất cả bài</button>`;
-            lessons.forEach(n => {
-                html += `<button type="button" class="lesson-option w-full text-left px-3.5 py-2 text-sm text-brand-800 hover:bg-brand-50 transition rounded-lg" data-value="${n}">Bài ${n}</button>`;
-            });
-            panel.innerHTML = html;
-        }
-
         let appState = {
             vocabulary: [],
             favorites: JSON.parse(localStorage.getItem('zh_favs') || '[]'),
@@ -2883,7 +3040,6 @@
             lastStudied: localStorage.getItem('zh_last_date') || '',
             activeMode: 'home',
             currentHsk: 'HSK1',
-            currentLesson: 'ALL',
             statusFilter: localStorage.getItem('zh_status_filter') || 'ALL',
             filteredVocab: [],
             
@@ -3450,16 +3606,15 @@
 
             try {
                 const excelVocab = await loadVocabularyFromExcel();
-                if (!excelVocab || excelVocab.length === 0) throw new Error('Tu_vung.xlsx không có dữ liệu hợp lệ');
+                if (!excelVocab || excelVocab.length === 0) throw new Error('Tu vung.xlsx không có dữ liệu hợp lệ');
                 appState.vocabulary = [...excelVocab, ...customVocab];
             } catch (err) {
-                console.error('Lỗi tải Tu_vung.xlsx:', err);
+                console.error('Lỗi tải Tu vung.xlsx:', err);
                 appState.vocabulary = [...FALLBACK_VOCABULARY, ...customVocab];
-                showToast('Không tải được Tu_vung.xlsx — đang dùng dữ liệu mẫu dự phòng. Kiểm tra file có đúng tên "Tu_vung.xlsx", nằm cùng thư mục index.html, và trang được mở qua http/https (không mở trực tiếp file).', 'error', 6000);
+                showToast('Không tải được Tu vung.xlsx — đang dùng dữ liệu mẫu dự phòng. Kiểm tra file có đúng tên "Tu vung.xlsx", nằm cùng thư mục index.html, và trang được mở qua http/https (không mở trực tiếp file).', 'error', 6000);
             }
 
             rebuildHskDropdownAvailability();
-            rebuildLessonDropdown();
 
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.getVoices();
@@ -3569,10 +3724,8 @@
                 optBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     appState.currentHsk = optBtn.dataset.value;
-                    appState.currentLesson = 'ALL';
                     label.innerText = optBtn.dataset.label;
                     closePanel();
-                    rebuildLessonDropdown();
                     applyFilter();
                 });
             });
@@ -3582,35 +3735,6 @@
                     closePanel();
                 }
             });
-
-            // Dropdown "Chọn bài" (chỉ hiện với Giáo trình HSK)
-            const lessonBtn = document.getElementById('lesson-dropdown-btn');
-            const lessonPanel = document.getElementById('lesson-dropdown-panel');
-            const lessonLabel = document.getElementById('lesson-dropdown-label');
-            if (lessonBtn && lessonPanel) {
-                lessonBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    lessonPanel.classList.toggle('hidden');
-                });
-
-                // Event delegation: các nút .lesson-option được tạo lại động trong rebuildLessonDropdown()
-                lessonPanel.addEventListener('click', (e) => {
-                    const optBtn = e.target.closest('.lesson-option');
-                    if (!optBtn) return;
-                    e.stopPropagation();
-                    const val = optBtn.dataset.value;
-                    appState.currentLesson = val === 'ALL' ? 'ALL' : Number(val);
-                    lessonLabel.innerText = val === 'ALL' ? 'Tất cả bài' : `Bài ${val}`;
-                    lessonPanel.classList.add('hidden');
-                    applyFilter();
-                });
-
-                document.addEventListener('click', (e) => {
-                    if (!document.getElementById('lesson-dropdown-wrapper').contains(e.target)) {
-                        lessonPanel.classList.add('hidden');
-                    }
-                });
-            }
         }
 
         const HOME_QUOTES = [
@@ -4179,10 +4303,6 @@
                 appState.filteredVocab = appState.vocabulary.filter(v => appState.favorites.includes(v.id));
             } else {
                 appState.filteredVocab = appState.vocabulary.filter(v => v.hsk === level);
-            }
-
-            if (typeof level === 'string' && level.startsWith('GT_HSK') && appState.currentLesson !== 'ALL') {
-                appState.filteredVocab = appState.filteredVocab.filter(v => v.lesson === appState.currentLesson);
             }
 
             if (appState.statusFilter === 'UNKNOWN') {
