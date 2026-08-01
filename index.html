@@ -2067,6 +2067,15 @@
                         </div>
                     </div>
                 </div>
+                <div class="relative hidden" id="lesson-dropdown-wrapper">
+                    <button type="button" id="lesson-dropdown-btn" class="bg-brand-50 border border-brand-200 text-brand-950 text-sm font-medium rounded-xl px-3.5 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none cursor-pointer w-full sm:w-auto min-w-[110px] flex items-center justify-between gap-2">
+                        <span id="lesson-dropdown-label">Tất cả bài</span>
+                        <i class="fa-solid fa-chevron-down text-xs text-brand-400"></i>
+                    </button>
+                    <div id="lesson-dropdown-panel" class="hidden absolute left-0 z-30 mt-1.5 w-40 bg-white border border-brand-200 rounded-xl shadow-lg py-1.5 max-h-80 overflow-y-auto">
+                        <!-- Danh sách bài được dựng động bằng JS, xem rebuildLessonDropdown() -->
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -2967,6 +2976,7 @@
                     if (!hanzi) return;
                     countThisSheet++;
                     const bai = row['Bài'] || row['bài'] || '';
+                    const lessonNum = bai !== '' && !isNaN(Number(bai)) ? Number(bai) : null;
                     vocab.push({
                         id: `${level.toLowerCase()}-${idx + 1}`,
                         hanzi,
@@ -2975,6 +2985,7 @@
                         meaning: String(row['Nghĩa'] || '').trim(),
                         hsk: level,
                         category: bai ? `Bài ${bai}` : '',
+                        lesson: lessonNum,
                         exampleCn: String(row['Ví dụ câu'] || '').trim(),
                         examplePinyin: String(row['Pinyin câu'] || '').trim(),
                         exampleVi: String(row['Nghĩa câu'] || '').trim()
@@ -3030,6 +3041,36 @@
             }
         }
 
+        // Dựng dropdown "Chọn bài" — chỉ hiện khi đang chọn 1 giáo trình (GT_HSK...) VÀ
+        // giáo trình đó có dữ liệu cột "Bài". Với Từ vựng HSK thường / Yêu thích thì ẩn đi.
+        function rebuildLessonDropdown() {
+            const wrapper = document.getElementById('lesson-dropdown-wrapper');
+            const panel = document.getElementById('lesson-dropdown-panel');
+            const label = document.getElementById('lesson-dropdown-label');
+            if (!wrapper || !panel || !label) return;
+
+            const level = appState.currentHsk;
+            const isGiaoTrinh = typeof level === 'string' && level.startsWith('GT_HSK');
+            const lessons = isGiaoTrinh
+                ? [...new Set(appState.vocabulary.filter(v => v.hsk === level && v.lesson !== null).map(v => v.lesson))].sort((a, b) => a - b)
+                : [];
+
+            if (!isGiaoTrinh || lessons.length === 0) {
+                wrapper.classList.add('hidden');
+                appState.currentLesson = 'ALL';
+                return;
+            }
+
+            wrapper.classList.remove('hidden');
+            label.innerText = appState.currentLesson === 'ALL' ? 'Tất cả bài' : `Bài ${appState.currentLesson}`;
+
+            let html = `<button type="button" class="lesson-option w-full text-left px-3.5 py-2 text-sm text-brand-800 hover:bg-brand-50 transition rounded-lg" data-value="ALL">Tất cả bài</button>`;
+            lessons.forEach(n => {
+                html += `<button type="button" class="lesson-option w-full text-left px-3.5 py-2 text-sm text-brand-800 hover:bg-brand-50 transition rounded-lg" data-value="${n}">Bài ${n}</button>`;
+            });
+            panel.innerHTML = html;
+        }
+
         let appState = {
             vocabulary: [],
             favorites: JSON.parse(localStorage.getItem('zh_favs') || '[]'),
@@ -3040,6 +3081,7 @@
             lastStudied: localStorage.getItem('zh_last_date') || '',
             activeMode: 'home',
             currentHsk: 'HSK1',
+            currentLesson: 'ALL',
             statusFilter: localStorage.getItem('zh_status_filter') || 'ALL',
             filteredVocab: [],
             
@@ -3615,6 +3657,7 @@
             }
 
             rebuildHskDropdownAvailability();
+            rebuildLessonDropdown();
 
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.getVoices();
@@ -3724,8 +3767,10 @@
                 optBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     appState.currentHsk = optBtn.dataset.value;
+                    appState.currentLesson = 'ALL';
                     label.innerText = optBtn.dataset.label;
                     closePanel();
+                    rebuildLessonDropdown();
                     applyFilter();
                 });
             });
@@ -3735,6 +3780,35 @@
                     closePanel();
                 }
             });
+
+            // Dropdown "Chọn bài" (chỉ hiện với Giáo trình HSK)
+            const lessonBtn = document.getElementById('lesson-dropdown-btn');
+            const lessonPanel = document.getElementById('lesson-dropdown-panel');
+            const lessonLabel = document.getElementById('lesson-dropdown-label');
+            if (lessonBtn && lessonPanel) {
+                lessonBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    lessonPanel.classList.toggle('hidden');
+                });
+
+                // Event delegation: các nút .lesson-option được tạo lại động trong rebuildLessonDropdown()
+                lessonPanel.addEventListener('click', (e) => {
+                    const optBtn = e.target.closest('.lesson-option');
+                    if (!optBtn) return;
+                    e.stopPropagation();
+                    const val = optBtn.dataset.value;
+                    appState.currentLesson = val === 'ALL' ? 'ALL' : Number(val);
+                    lessonLabel.innerText = val === 'ALL' ? 'Tất cả bài' : `Bài ${val}`;
+                    lessonPanel.classList.add('hidden');
+                    applyFilter();
+                });
+
+                document.addEventListener('click', (e) => {
+                    if (!document.getElementById('lesson-dropdown-wrapper').contains(e.target)) {
+                        lessonPanel.classList.add('hidden');
+                    }
+                });
+            }
         }
 
         const HOME_QUOTES = [
@@ -4303,6 +4377,10 @@
                 appState.filteredVocab = appState.vocabulary.filter(v => appState.favorites.includes(v.id));
             } else {
                 appState.filteredVocab = appState.vocabulary.filter(v => v.hsk === level);
+            }
+
+            if (typeof level === 'string' && level.startsWith('GT_HSK') && appState.currentLesson !== 'ALL') {
+                appState.filteredVocab = appState.filteredVocab.filter(v => v.lesson === appState.currentLesson);
             }
 
             if (appState.statusFilter === 'UNKNOWN') {
