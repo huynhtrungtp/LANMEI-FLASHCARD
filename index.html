@@ -2856,6 +2856,21 @@
 
             </div>
 
+            <div class="border-t border-brand-100 mt-4 pt-4 pb-4">
+                <label class="flex items-center justify-between px-3.5 py-2.5 bg-brand-50 border border-brand-200 rounded-xl cursor-pointer">
+                    <span class="flex items-start gap-2">
+                        <i class="fa-solid fa-volume-high text-brand-500 mt-0.5"></i>
+                        <span>
+                            <span class="text-sm font-bold text-brand-900 block">Tự động phát âm từ mới</span>
+                            <span class="text-xs text-slate-500">Tự đọc to Hán tự mỗi khi chuyển sang thẻ mới</span>
+                        </span>
+                    </span>
+                    <input type="checkbox" id="setting-auto-speak-new-word" class="w-5 h-5 accent-brand-500 cursor-pointer shrink-0 ml-2">
+                </label>
+            </div>
+
+            </div>
+
             <div class="px-6 pb-6 pt-4 flex justify-end border-t border-brand-100 shrink-0">
                 <button type="button" id="btn-done-settings-modal" class="px-5 py-2 bg-brand-500 hover:bg-brand-600 text-white text-sm font-bold rounded-xl shadow-md shadow-brand-500/20">
                     Xong
@@ -3092,6 +3107,7 @@
             autoPlayActive: false,
             autoPlaySpeed: parseInt(localStorage.getItem('zh_autoplay_speed') || '3'),
             voiceGender: localStorage.getItem('zh_voice_gender') || 'female',
+            autoSpeakNewWord: localStorage.getItem('zh_auto_speak_new_word') === 'true',
             isRecordingPronunciation: false,
             lastRecordingUrl: null,
             activeMediaRecorder: null,
@@ -4787,6 +4803,10 @@
                 btn.className = isActive ? s.active : s.idle;
                 btn.querySelector('i').className = isActive ? s.activeIcon : s.idleIcon;
             });
+
+            if (appState.autoSpeakNewWord) {
+                speakHanzi(word.hanzi);
+            }
         }
 
         function openQuickWriting(word) {
@@ -5553,6 +5573,16 @@
                     startAutoPlay();
                 }
             });
+
+            // Bật/tắt tự động phát âm khi chuyển sang thẻ mới
+            const autoSpeakToggle = document.getElementById('setting-auto-speak-new-word');
+            if (autoSpeakToggle) {
+                autoSpeakToggle.checked = appState.autoSpeakNewWord;
+                autoSpeakToggle.addEventListener('change', (e) => {
+                    appState.autoSpeakNewWord = e.target.checked;
+                    localStorage.setItem('zh_auto_speak_new_word', String(appState.autoSpeakNewWord));
+                });
+            }
         }
 
         function setupModalEvents() {
