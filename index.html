@@ -219,6 +219,14 @@
         #view-container:has(#mode-dictionary:not(.hidden)) {
             justify-content: flex-start;
         }
+
+        /* Trên mobile: ẩn thanh chọn Sổ Tay (HSK) khi đang ở Trang Chủ.
+           Thanh này chỉ cần hiện lại khi vào các chế độ học khác (Thẻ Nhớ, Bài Tập...) */
+        @media (max-width: 767px) {
+            #top-filter-bar:has(~ #view-container #mode-home:not(.hidden)) {
+                display: none;
+            }
+        }
     
 /* ===== GRAMMAR MODAL OVERLAY ===== */
 #grammar-modal-overlay {
@@ -2107,7 +2115,7 @@
 
     <main id="app-main-content" class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col gap-6">
 
-        <div class="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 bg-white/80 p-3 rounded-2xl border border-brand-200/80 shadow-xs">
+        <div id="top-filter-bar" class="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 bg-white/80 p-3 rounded-2xl border border-brand-200/80 shadow-xs">
             
             <div class="hidden md:flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none font-medium">
                 <button data-mode="home" class="tab-btn px-3 py-2 rounded-xl text-sm font-semibold text-brand-800/70 hover:text-brand-900 hover:bg-brand-50 transition flex items-center gap-2 whitespace-nowrap">
@@ -2211,7 +2219,7 @@
             <section id="mode-home" class="study-mode hidden w-full flex flex-col gap-8" style="background-image: url('hinhnen.png'); background-size: cover; background-position: center; background-attachment: fixed; border-radius: 1.5rem; padding: 1.5rem;">
 
                 <!-- Hero -->
-                <div class="w-full rounded-3xl bg-gradient-to-br from-brand-50 via-white to-accent-50 border border-brand-200 shadow-lg p-6 sm:p-10 flex flex-col sm:flex-row items-center gap-6 relative overflow-hidden">
+                <div class="order-2 md:order-1 w-full rounded-3xl bg-gradient-to-br from-brand-50 via-white to-accent-50 border border-brand-200 shadow-lg p-6 sm:p-10 flex flex-col sm:flex-row items-center gap-6 relative overflow-hidden">
                     <!-- Trang trí nền -->
                     <div class="absolute bottom-3 right-8 text-5xl opacity-10 select-none">🫐</div>
                     <div class="absolute top-6 right-32 text-2xl opacity-15 select-none">🫐</div>
@@ -2227,7 +2235,7 @@
                 </div>
 
                 <!-- Thanh Tra Cứu Nhanh (giống ô tìm kiếm của Hanzii) -->
-                <div class="w-full flex flex-col items-center gap-3">
+                <div class="order-1 md:order-2 w-full flex flex-col items-center gap-3">
                     <div class="flex items-center gap-2 flex-wrap justify-center">
                         <button type="button" class="home-search-tab-btn px-4 py-1.5 rounded-full text-xs sm:text-sm font-bold border transition bg-brand-500 text-white border-brand-500" data-scope="vocab">Từ vựng</button>
                         <button type="button" class="home-search-tab-btn px-4 py-1.5 rounded-full text-xs sm:text-sm font-bold border transition bg-white text-brand-700 border-brand-200 hover:bg-brand-50" data-scope="sentence">Mẫu câu</button>
@@ -2244,7 +2252,7 @@
                 </div>
 
                 <!-- Bảng xếp hạng điểm -->
-                <div>
+                <div class="order-3">
                     <div class="flex items-center justify-between mb-3 gap-2 flex-wrap">
                         <h3 class="text-lg font-extrabold text-brand-950 flex items-center gap-2">
                             <span>🏆</span> Bảng Xếp Hạng Điểm
@@ -2256,7 +2264,7 @@
                 </div>
 
                 <!-- Các tính năng chính -->
-                <div>
+                <div class="order-4">
                     <h3 class="text-lg font-extrabold text-brand-950 mb-3">Các Tính Năng Chính</h3>
                     <div class="flex flex-wrap items-stretch gap-3">
                         <button class="home-card group flex-none w-[98px] sm:w-[112px] bg-white hover:bg-brand-50 border border-brand-200 hover:border-brand-400 rounded-2xl p-3 shadow-sm hover:shadow-md transition flex flex-col items-center gap-2 text-center" data-mode="flashcard">
@@ -2301,7 +2309,7 @@
                 </div>
 
                 <!-- Tiến Độ Học Tập -->
-                <div>
+                <div class="order-5">
                     <div class="flex items-center justify-between mb-3 gap-2 flex-wrap">
                         <h3 class="text-lg font-extrabold text-brand-950">Tiến Độ Học Tập</h3>
                         <span class="text-xs font-bold text-amber-600 bg-amber-50 border border-amber-200 rounded-full px-3 py-1 flex items-center gap-1.5 whitespace-nowrap">
@@ -2381,7 +2389,7 @@
                 </div>
 
                 <!-- Câu động viên -->
-                <div class="bg-gradient-to-r from-brand-50 to-accent-50 border border-brand-200 rounded-2xl p-4 text-center">
+                <div class="order-6 bg-gradient-to-r from-brand-50 to-accent-50 border border-brand-200 rounded-2xl p-4 text-center">
                     <p id="home-quote" class="text-sm font-semibold text-brand-700 italic"></p>
                 </div>
 
