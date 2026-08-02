@@ -1921,7 +1921,8 @@
     min-width: 140px;
   }
   #theme-picker-popup.open { display: flex; }
-  .theme-option {
+  .theme-option,
+  #theme-bg-pattern-toggle {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -1934,13 +1935,54 @@
     transition: all .15s;
     color: #1e293b;
   }
-  .theme-option:hover { background: #f8fafc; }
+  .theme-option:hover, #theme-bg-pattern-toggle:hover { background: #f8fafc; }
   .theme-option.active { border-color: #7c3aed; background: #f5f3ff; }
   .theme-dot {
     width: 18px; height: 18px;
     border-radius: 50%;
     flex-shrink: 0;
     border: 2px solid rgba(0,0,0,0.1);
+  }
+
+  /* Chấm tròn của hàng "Xóa hoa văn nền" — dùng chung style .theme-dot,
+     đổi màu + hiện dấu tích khi tùy chọn đang bật */
+  #theme-bg-pattern-dot {
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #theme-bg-pattern-dot::after {
+    content: '\f00c';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    font-size: 10px;
+    color: transparent;
+    transition: color .15s;
+  }
+  html.hide-bg-pattern #theme-bg-pattern-dot {
+    background: #7c3aed;
+    border-color: #7c3aed;
+  }
+  html.hide-bg-pattern #theme-bg-pattern-dot::after { color: white; }
+
+  /* ═══════════════════════════════════════════════════════════════
+     [TÙY CHỌN XÓA HOA VĂN NỀN] Khi bật (html có class "hide-bg-pattern"),
+     xoá ảnh hoa văn trang trí (nen xanh.png, nen do.png...) khỏi MỌI
+     giao diện màu, chỉ để lại nền trơn. Bật/tắt bằng cách nhấn giữ vào
+     logo góc trên bên trái, hoặc bấm dòng "Xóa hoa văn nền" trong popup.
+     Đặt cuối cùng trong khối theme để thắng các rule !important ở trên
+     (cùng độ ưu tiên CSS, quy tắc nào đứng sau sẽ được áp dụng).
+     ═══════════════════════════════════════════════════════════════════ */
+  html.hide-bg-pattern #mode-home,
+  html.hide-bg-pattern #mode-flashcard,
+  html.hide-bg-pattern #mode-exercises,
+  html.hide-bg-pattern #mode-quiz,
+  html.hide-bg-pattern #mode-listening,
+  html.hide-bg-pattern #mode-translate,
+  html.hide-bg-pattern #mode-writing,
+  html.hide-bg-pattern #mode-dictionary {
+    background-image: none !important;
   }
 </style>
 </head>
@@ -2044,6 +2086,10 @@
                             <div class="theme-option" data-theme="xunyicao">
                                 <span class="theme-dot" style="background:linear-gradient(135deg,#6d28d9,#a78bfa)"></span>
                                 XunYiCao
+                            </div>
+                            <div id="theme-bg-pattern-toggle" title="Nhấn giữ vào logo cũng bật/tắt được tùy chọn này">
+                                <span class="theme-dot" id="theme-bg-pattern-dot"></span>
+                                Xóa hoa văn nền
                             </div>
                         </div>
                     </div>
@@ -7466,6 +7512,85 @@ render();
     // Áp dụng theme đã lưu
     var saved = localStorage.getItem(THEME_KEY) || 'meigui';
     applyTheme(saved);
+})();
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     [TÙY CHỌN XÓA HOA VĂN NỀN] Nhấn giữ vào logo (hoặc bấm dòng
+     "Xóa hoa văn nền" trong popup) để bật/tắt việc ẩn ảnh hoa văn
+     trang trí (nen xanh.png, nen do.png...) khỏi mọi giao diện màu.
+     CSS xử lý phần ẩn thật sự nằm ở khối "html.hide-bg-pattern ..."
+     trong <style>, ở gần cuối phần [MÀU SẮC - THEME].
+     ═══════════════════════════════════════════════════════════════════ -->
+<script>
+(function() {
+    var BG_PATTERN_KEY = 'lanmei-hide-bg-pattern';
+    var LONG_PRESS_MS = 550;
+
+    var btn = document.getElementById('theme-toggle-btn');
+    var checkboxRow = document.getElementById('theme-bg-pattern-toggle');
+    if (!btn) return;
+
+    function isHidden() {
+        return localStorage.getItem(BG_PATTERN_KEY) === '1';
+    }
+
+    function applyState(hide) {
+        document.documentElement.classList.toggle('hide-bg-pattern', hide);
+    }
+
+    function toggle() {
+        var next = !isHidden();
+        localStorage.setItem(BG_PATTERN_KEY, next ? '1' : '0');
+        applyState(next);
+        if (navigator.vibrate) { try { navigator.vibrate(30); } catch (e) {} }
+        if (typeof showToast === 'function') {
+            showToast(next ? 'Đã xóa hoa văn nền cho mọi giao diện 🌿' : 'Đã hiện lại hoa văn nền', 'info');
+        }
+    }
+
+    // ---- Nhấn giữ vào logo ----
+    var pressTimer = null;
+    var longPressFired = false;
+
+    function startPress() {
+        longPressFired = false;
+        clearTimeout(pressTimer);
+        pressTimer = setTimeout(function() {
+            longPressFired = true;
+            toggle();
+        }, LONG_PRESS_MS);
+    }
+    function cancelPress() {
+        clearTimeout(pressTimer);
+    }
+
+    btn.addEventListener('pointerdown', startPress);
+    btn.addEventListener('pointerup', cancelPress);
+    btn.addEventListener('pointerleave', cancelPress);
+    btn.addEventListener('pointercancel', cancelPress);
+    btn.addEventListener('contextmenu', function(e) { e.preventDefault(); }); // tránh menu chuột phải khi giữ lâu trên PC
+
+    // Chặn click mở popup ngay sau khi vừa nhấn giữ thành công (chạy ở capture
+    // phase để luôn thực thi TRƯỚC listener mở popup ở script phía trên)
+    btn.addEventListener('click', function(e) {
+        if (longPressFired) {
+            e.stopImmediatePropagation();
+            e.preventDefault();
+            longPressFired = false;
+        }
+    }, true);
+
+    // ---- Bấm dòng "Xóa hoa văn nền" trong popup ----
+    if (checkboxRow) {
+        checkboxRow.addEventListener('click', function(e) {
+            e.stopPropagation();
+            toggle();
+        });
+    }
+
+    // Áp dụng trạng thái đã lưu khi tải trang
+    applyState(isHidden());
 })();
 </script>
 
