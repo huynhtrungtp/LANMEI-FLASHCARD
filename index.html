@@ -145,6 +145,72 @@
             touch-action: manipulation;
         }
 
+        /* ═══════════════════════════════════════════════════════════
+           [ĐIỀU HƯỚNG DƯỚI CÙNG - MOBILE] Thanh tab cố định ở đáy màn
+           hình trên điện thoại (giống app Hanzii): icon phía trên,
+           chữ nhỏ phía dưới, luôn hiển thị khi cuộn trang. Trên màn
+           hình lớn (≥ md) vẫn dùng thanh tab ngang phía trên như cũ.
+           ═══════════════════════════════════════════════════════════ */
+        #mobile-bottom-nav {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 50;
+            display: flex;
+            align-items: stretch;
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-top: 1px solid #bae6fd;
+            box-shadow: 0 -4px 16px rgba(2, 132, 199, 0.08);
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+        }
+        .bottom-tab-btn {
+            flex: 1 1 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            padding: 8px 2px 7px;
+            font-size: 10px;
+            font-weight: 700;
+            color: #64748b;
+            transition: color .15s ease;
+            position: relative;
+        }
+        .bottom-tab-btn i, .bottom-tab-btn .bottom-tab-emoji {
+            font-size: 19px;
+            line-height: 1;
+        }
+        .bottom-tab-btn span {
+            line-height: 1;
+            white-space: nowrap;
+        }
+        .bottom-tab-btn.active {
+            color: #0369a1;
+        }
+        .bottom-tab-btn.active::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            width: 28px;
+            height: 3px;
+            border-radius: 0 0 4px 4px;
+            background: #0284c7;
+        }
+        /* Chừa khoảng trống phía dưới để nội dung không bị thanh nav che mất (chỉ trên mobile) */
+        @media (max-width: 767px) {
+            #app-main-content {
+                padding-bottom: 78px;
+            }
+            #mobile-bottom-nav { display: flex; }
+        }
+        @media (min-width: 768px) {
+            #mobile-bottom-nav { display: none; }
+        }
+
         /* #view-container căn giữa theo chiều dọc để các màn hình ngắn (Quiz, Nghe, Dịch...)
            trông đẹp giữa trang. Nhưng Trang chủ và Tra Từ là nội dung dài dạng danh sách,
            nên không được căn giữa — nếu không sẽ tạo khoảng trống rất lớn phía trên khi
@@ -2010,11 +2076,40 @@
         </div>
     </header>
 
-    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col gap-6">
+    <!-- ═══════════════════════════════════════════════════════════════════
+         [ĐIỀU HƯỚNG DƯỚI CÙNG - MOBILE] Chỉ hiển thị trên điện thoại (< md).
+         Đây là bản sao chức năng của thanh tab phía trên (dành cho desktop),
+         dùng chung data-mode nên vẫn hoạt động với switchMode() có sẵn.
+         Style định nghĩa ở khối [ĐIỀU HƯỚNG DƯỚI CÙNG - MOBILE] trong <style>.
+         ═══════════════════════════════════════════════════════════════════ -->
+    <nav id="mobile-bottom-nav" aria-label="Điều hướng chính">
+        <button type="button" data-mode="home" class="bottom-tab-btn" title="Trang chủ">
+            <i class="fa-solid fa-house"></i>
+            <span>Trang chủ</span>
+        </button>
+        <button type="button" data-mode="flashcard" class="bottom-tab-btn" title="Thẻ Nhớ">
+            <i class="fa-solid fa-layer-group"></i>
+            <span>Thẻ Nhớ</span>
+        </button>
+        <button type="button" data-mode="exercises" class="bottom-tab-btn" title="Bài Tập">
+            <span class="bottom-tab-emoji">📝</span>
+            <span>Bài Tập</span>
+        </button>
+        <button type="button" data-mode="dictionary" class="bottom-tab-btn" title="Tra Từ">
+            <i class="fa-solid fa-book"></i>
+            <span>Tra Từ</span>
+        </button>
+        <button type="button" id="btn-open-grammar-modal-mobile" class="bottom-tab-btn btn-open-grammar-modal-trigger" title="Ngữ Pháp">
+            <i class="fa-solid fa-book-open"></i>
+            <span>Ngữ Pháp</span>
+        </button>
+    </nav>
+
+    <main id="app-main-content" class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col gap-6">
 
         <div class="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 bg-white/80 p-3 rounded-2xl border border-brand-200/80 shadow-xs">
             
-            <div class="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none font-medium">
+            <div class="hidden md:flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none font-medium">
                 <button data-mode="home" class="tab-btn px-3 py-2 rounded-xl text-sm font-semibold text-brand-800/70 hover:text-brand-900 hover:bg-brand-50 transition flex items-center gap-2 whitespace-nowrap">
                     <i class="fa-solid fa-house"></i>
                 </button>
@@ -2034,7 +2129,7 @@
                     <span>Tra Từ</span>
                 </button>
 
-                <button id="btn-open-grammar-modal" class="px-3.5 py-2 rounded-xl text-sm font-semibold text-brand-800/70 hover:text-brand-900 hover:bg-brand-50 transition flex items-center gap-2 whitespace-nowrap" title="Mở bảng Ngữ pháp tiếng Trung">
+                <button id="btn-open-grammar-modal" class="btn-open-grammar-modal-trigger px-3.5 py-2 rounded-xl text-sm font-semibold text-brand-800/70 hover:text-brand-900 hover:bg-brand-50 transition flex items-center gap-2 whitespace-nowrap" title="Mở bảng Ngữ pháp tiếng Trung">
                     <i class="fa-solid fa-book-open"></i>
                     <span>Ngữ Pháp</span>
                 </button>
@@ -3849,6 +3944,14 @@
                 });
             });
 
+            // Thanh điều hướng dưới cùng trên mobile (bản sao chức năng của .tab-btn)
+            document.querySelectorAll('.bottom-tab-btn[data-mode]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const mode = btn.getAttribute('data-mode');
+                    switchMode(mode);
+                });
+            });
+
             document.querySelectorAll('.exercise-hub-card').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const mode = btn.getAttribute('data-mode');
@@ -3871,6 +3974,12 @@
                 } else {
                     btn.className = "tab-btn px-3.5 py-2 rounded-xl text-sm font-semibold text-brand-800/70 hover:text-brand-900 hover:bg-brand-50 transition flex items-center gap-2 whitespace-nowrap";
                 }
+            });
+
+            document.querySelectorAll('.bottom-tab-btn[data-mode]').forEach(btn => {
+                const btnMode = btn.getAttribute('data-mode');
+                const isActive = btnMode === mode || (btnMode === 'exercises' && exerciseModes.includes(mode));
+                btn.classList.toggle('active', isActive);
             });
 
             document.querySelectorAll('.study-mode').forEach(sec => sec.classList.add('hidden'));
@@ -7355,12 +7464,14 @@ render();
 <script>
 // Grammar Modal Open/Close
 (function() {
-    var btn = document.getElementById('btn-open-grammar-modal');
+    var triggers = document.querySelectorAll('.btn-open-grammar-modal-trigger');
     var overlay = document.getElementById('grammar-modal-overlay');
-    if (!btn || !overlay) return;
-    btn.addEventListener('click', function() {
-        overlay.classList.add('active');
-        document.body.style.overflow = 'hidden';
+    if (!triggers.length || !overlay) return;
+    triggers.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
     });
     document.getElementById('grammar-close-btn').addEventListener('click', function() {
         overlay.classList.remove('active');
