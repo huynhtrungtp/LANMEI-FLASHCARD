@@ -2135,6 +2135,7 @@
                 <div class="w-full flex flex-col items-center gap-3">
                     <div class="flex items-center gap-2 flex-wrap justify-center">
                         <button type="button" class="home-search-tab-btn px-4 py-1.5 rounded-full text-xs sm:text-sm font-bold border transition bg-brand-500 text-white border-brand-500" data-scope="vocab">Từ vựng</button>
+                        <button type="button" class="home-search-tab-btn px-4 py-1.5 rounded-full text-xs sm:text-sm font-bold border transition bg-white text-brand-700 border-brand-200 hover:bg-brand-50" data-scope="sentence">Mẫu câu</button>
                         <button type="button" class="home-search-tab-btn px-4 py-1.5 rounded-full text-xs sm:text-sm font-bold border transition bg-white text-brand-700 border-brand-200 hover:bg-brand-50" data-scope="grammar">Ngữ pháp</button>
                     </div>
                     <div class="relative w-full max-w-xl">
@@ -5656,6 +5657,17 @@
             }
             tabs.forEach(btn => btn.addEventListener('click', () => setActiveTab(btn.getAttribute('data-scope'))));
 
+            // Tô đỏ đoạn khớp với từ khoá trong 1 chuỗi (giống Hanzii bôi đỏ "cảm ơn" trong kết quả)
+            function highlightMatch(text, term) {
+                if (!term) return escapeHtml(text || '');
+                const idx = (text || '').toLowerCase().indexOf(term.toLowerCase());
+                if (idx === -1) return escapeHtml(text || '');
+                const before = escapeHtml(text.slice(0, idx));
+                const hit = escapeHtml(text.slice(idx, idx + term.length));
+                const after = escapeHtml(text.slice(idx + term.length));
+                return `${before}<span class="text-red-600 font-bold">${hit}</span>${after}`;
+            }
+
             function renderHomeSearchResults(term) {
                 const q = term.trim().toLowerCase();
                 if (!q) { resultsBox.classList.add('hidden'); resultsBox.innerHTML = ''; return; }
@@ -5677,6 +5689,35 @@
                                     <span class="text-xs text-brand-500 shrink-0">${item.pinyin}</span>
                                 </span>
                                 <span class="text-xs text-slate-600 truncate">${escapeHtml(item.meaning)}</span>
+                            </button>
+                        `).join('');
+                } else if (activeScope === 'sentence') {
+                    // [Mẫu câu] Duyệt toàn bộ appState.vocabulary (đã gộp Ví dụ câu/Pinyin câu/Nghĩa câu
+                    // từ MỌI sheet trong Tu vung.xlsx lúc tải app — xem loadVocabularyFromExcel()),
+                    // lọc ra các câu ví dụ có chứa từ khoá đang gõ, tránh trùng câu.
+                    const seen = new Set();
+                    const matches = appState.vocabulary.filter(item => {
+                        if (!item.exampleCn || seen.has(item.exampleCn)) return false;
+                        const hit = item.exampleCn.includes(term.trim()) ||
+                                    item.hanzi.toLowerCase().includes(q) ||
+                                    item.pinyin.toLowerCase().includes(q) ||
+                                    (item.examplePinyin || '').toLowerCase().includes(q) ||
+                                    (item.exampleVi || '').toLowerCase().includes(q) ||
+                                    item.meaning.toLowerCase().includes(q);
+                        if (hit) seen.add(item.exampleCn);
+                        return hit;
+                    }).slice(0, 10);
+
+                    resultsBox.innerHTML = matches.length === 0
+                        ? `<div class="p-4 text-sm text-slate-500 text-center">Không tìm thấy mẫu câu nào chứa "${escapeHtml(term)}"</div>`
+                        : matches.map(item => `
+                            <button type="button" class="home-search-sentence-item w-full flex items-start justify-between gap-3 px-4 py-3 hover:bg-brand-50 transition text-left border-b border-brand-50 last:border-0" data-hanzi="${escapeHtml(item.exampleCn)}">
+                                <span class="min-w-0">
+                                    <span class="block font-hanzi font-bold text-base text-brand-950 mb-0.5">${highlightMatch(item.exampleCn, term.trim())}</span>
+                                    <span class="block text-xs text-brand-500 mb-0.5">${escapeHtml(item.examplePinyin || '')}</span>
+                                    <span class="block text-xs text-slate-600">${highlightMatch(item.exampleVi || '', term.trim())}</span>
+                                </span>
+                                <i class="fa-solid fa-volume-high text-brand-400 shrink-0 mt-1"></i>
                             </button>
                         `).join('');
                 } else {
@@ -5714,6 +5755,12 @@
                     }
                     return;
                 }
+                const sentenceItem = e.target.closest('.home-search-sentence-item');
+                if (sentenceItem) {
+                    const cn = sentenceItem.getAttribute('data-hanzi');
+                    if (cn) speakHanzi(cn);
+                    return;
+                }
                 const openGrammar = e.target.closest('#home-search-open-grammar');
                 if (openGrammar) {
                     const term = input.value;
@@ -5740,6 +5787,8 @@
                 e.preventDefault();
                 if (activeScope === 'grammar') {
                     document.getElementById('home-search-open-grammar')?.click();
+                } else if (activeScope === 'sentence') {
+                    resultsBox.querySelector('.home-search-sentence-item')?.click();
                 } else {
                     resultsBox.querySelector('.home-search-result-item')?.click();
                 }
