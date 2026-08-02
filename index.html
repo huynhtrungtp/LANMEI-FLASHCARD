@@ -2131,6 +2131,22 @@
                     </div>
                 </div>
 
+                <!-- Thanh Tra Cứu Nhanh (giống ô tìm kiếm của Hanzii) -->
+                <div class="w-full flex flex-col items-center gap-3">
+                    <div class="flex items-center gap-2 flex-wrap justify-center">
+                        <button type="button" class="home-search-tab-btn px-4 py-1.5 rounded-full text-xs sm:text-sm font-bold border transition bg-brand-500 text-white border-brand-500" data-scope="vocab">Từ vựng</button>
+                        <button type="button" class="home-search-tab-btn px-4 py-1.5 rounded-full text-xs sm:text-sm font-bold border transition bg-white text-brand-700 border-brand-200 hover:bg-brand-50" data-scope="grammar">Ngữ pháp</button>
+                    </div>
+                    <div class="relative w-full max-w-xl">
+                        <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-brand-400"></i>
+                        <input type="text" id="home-search-input" placeholder="Nhập Hán tự, Pinyin hoặc nghĩa..." class="w-full bg-white border border-brand-200 rounded-full pl-11 pr-11 py-3 text-sm text-brand-950 placeholder-brand-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <button type="button" id="home-search-speak" title="Nghe phát âm nội dung đang gõ" class="absolute right-4 top-1/2 -translate-y-1/2 text-brand-400 hover:text-brand-600 transition">
+                            <i class="fa-solid fa-volume-high"></i>
+                        </button>
+                        <div id="home-search-results" class="hidden absolute z-30 top-full mt-2 left-0 right-0 bg-white border border-brand-200 rounded-2xl shadow-lg overflow-hidden max-h-80 overflow-y-auto"></div>
+                    </div>
+                </div>
+
                 <!-- Bảng xếp hạng điểm -->
                 <div>
                     <div class="flex items-center justify-between mb-3 gap-2 flex-wrap">
@@ -3811,6 +3827,7 @@
             setupTranslateEvents();
             setupQuizEvents();
             setupDictionaryEvents();
+            setupHomeSearch();
             setupModalEvents();
             setupSettingsModalEvents();
             setupAudioSpeedControl();
@@ -5607,6 +5624,125 @@
         function setupDictionaryEvents() {
             document.getElementById('dict-search-input').addEventListener('input', (e) => {
                 renderDictionary(e.target.value);
+            });
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // [TRA CỨU NHANH TRÊN TRANG CHỦ] Ô tìm kiếm kiểu Hanzii: gõ 1 lần,
+        // xem gợi ý ngay, bấm vào 1 kết quả để nhảy đến đúng chỗ (Tra Từ /
+        // Ngữ Pháp). 2 nút tab (Từ vựng / Ngữ pháp) quyết định tìm ở đâu.
+        // ═══════════════════════════════════════════════════════════════
+        function setupHomeSearch() {
+            const input = document.getElementById('home-search-input');
+            const resultsBox = document.getElementById('home-search-results');
+            const speakBtn = document.getElementById('home-search-speak');
+            const tabs = document.querySelectorAll('.home-search-tab-btn');
+            if (!input || !resultsBox) return;
+
+            let activeScope = 'vocab';
+
+            function setActiveTab(scope) {
+                activeScope = scope;
+                tabs.forEach(btn => {
+                    const isActive = btn.getAttribute('data-scope') === scope;
+                    btn.classList.toggle('bg-brand-500', isActive);
+                    btn.classList.toggle('text-white', isActive);
+                    btn.classList.toggle('border-brand-500', isActive);
+                    btn.classList.toggle('bg-white', !isActive);
+                    btn.classList.toggle('text-brand-700', !isActive);
+                    btn.classList.toggle('border-brand-200', !isActive);
+                });
+                renderHomeSearchResults(input.value);
+            }
+            tabs.forEach(btn => btn.addEventListener('click', () => setActiveTab(btn.getAttribute('data-scope'))));
+
+            function renderHomeSearchResults(term) {
+                const q = term.trim().toLowerCase();
+                if (!q) { resultsBox.classList.add('hidden'); resultsBox.innerHTML = ''; return; }
+
+                if (activeScope === 'vocab') {
+                    const matches = appState.vocabulary.filter(item =>
+                        item.hanzi.includes(q) ||
+                        item.pinyin.toLowerCase().includes(q) ||
+                        (item.hanViet || '').toLowerCase().includes(q) ||
+                        item.meaning.toLowerCase().includes(q)
+                    ).slice(0, 8);
+
+                    resultsBox.innerHTML = matches.length === 0
+                        ? `<div class="p-4 text-sm text-slate-500 text-center">Không tìm thấy từ nào khớp "${escapeHtml(term)}"</div>`
+                        : matches.map(item => `
+                            <button type="button" class="home-search-result-item w-full flex items-center justify-between gap-3 px-4 py-2.5 hover:bg-brand-50 transition text-left border-b border-brand-50 last:border-0" data-hanzi="${escapeHtml(item.hanzi)}">
+                                <span class="flex items-center gap-3 min-w-0">
+                                    <span class="font-hanzi font-bold text-xl text-gradient-primary shrink-0">${item.hanzi}</span>
+                                    <span class="text-xs text-brand-500 shrink-0">${item.pinyin}</span>
+                                </span>
+                                <span class="text-xs text-slate-600 truncate">${escapeHtml(item.meaning)}</span>
+                            </button>
+                        `).join('');
+                } else {
+                    // [Ngữ pháp] Không đọc trực tiếp dữ liệu HSK_DATA (thuộc module riêng ở dưới
+                    // file) để tránh phụ thuộc chéo — thay vào đó mở modal Ngữ Pháp có sẵn và
+                    // đẩy từ khoá vào đúng ô #searchInput của module đó (xem đoạn addEventListener bên dưới).
+                    resultsBox.innerHTML = `
+                        <button type="button" id="home-search-open-grammar" class="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-bold text-rose-700 hover:bg-rose-50 transition">
+                            <i class="fa-solid fa-book"></i> Tìm "${escapeHtml(term)}" trong Ngữ Pháp
+                        </button>
+                    `;
+                }
+                resultsBox.classList.remove('hidden');
+            }
+
+            input.addEventListener('input', () => renderHomeSearchResults(input.value));
+            input.addEventListener('focus', () => { if (input.value.trim()) renderHomeSearchResults(input.value); });
+
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('#home-search-results') && !e.target.closest('#home-search-input')) {
+                    resultsBox.classList.add('hidden');
+                }
+            });
+
+            resultsBox.addEventListener('click', (e) => {
+                const item = e.target.closest('.home-search-result-item');
+                if (item) {
+                    const hanzi = item.getAttribute('data-hanzi');
+                    resultsBox.classList.add('hidden');
+                    switchMode('dictionary');
+                    const dictInput = document.getElementById('dict-search-input');
+                    if (dictInput) {
+                        dictInput.value = hanzi;
+                        renderDictionary(hanzi);
+                    }
+                    return;
+                }
+                const openGrammar = e.target.closest('#home-search-open-grammar');
+                if (openGrammar) {
+                    const term = input.value;
+                    resultsBox.classList.add('hidden');
+                    const grammarBtn = document.getElementById('btn-open-grammar-modal');
+                    if (grammarBtn) grammarBtn.click();
+                    setTimeout(() => {
+                        const gInput = document.getElementById('searchInput');
+                        if (gInput) {
+                            gInput.value = term;
+                            gInput.dispatchEvent(new Event('input'));
+                        }
+                    }, 150);
+                }
+            });
+
+            speakBtn.addEventListener('click', () => {
+                const val = input.value.trim();
+                if (val) speakHanzi(val);
+            });
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key !== 'Enter') return;
+                e.preventDefault();
+                if (activeScope === 'grammar') {
+                    document.getElementById('home-search-open-grammar')?.click();
+                } else {
+                    resultsBox.querySelector('.home-search-result-item')?.click();
+                }
             });
         }
 
