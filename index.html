@@ -6211,9 +6211,8 @@
   <div class="hz-watermark">語法</div>
   <div class="eyebrow">Kho ngữ pháp · Hán ngữ</div>
   <div class="source-tags" id="curriculumSwitcher">
-    <button type="button" class="source-tag curriculum-btn active" data-curriculum="hsk"><b>Giáo trình HSK chuẩn</b></button>
     <button type="button" class="source-tag curriculum-btn" data-curriculum="boya"><b>Giáo trình Boya</b></button>
-    <button type="button" class="source-tag curriculum-btn" data-curriculum="yufa"><b>Ngữ pháp YUFA</b></button>
+    <button type="button" class="source-tag curriculum-btn active" data-curriculum="yufa"><b>Giáo trình HSK chuẩn</b></button>
     <button type="button" class="source-tag curriculum-btn" data-curriculum="custom"><b>✎ Tự nhập</b></button>
   </div>
 </header>
@@ -7155,7 +7154,7 @@ function parseYufaSheet(sheetName, rows){
   return {
     level: 'yufa_' + normHeader(sheetName),
     levelName: sheetName,
-    sub: `Ngữ pháp YUFA — nhập từ file YUFA.xlsx · ${items.length} điểm ngữ pháp`,
+    sub: `Giáo trình HSK chuẩn — nhập từ file YUFA.xlsx · ${items.length} điểm ngữ pháp`,
     stamp: numMatch ? numMatch[0] : sheetName.charAt(0),
     items: items,
     lessons: lessons
@@ -7195,7 +7194,7 @@ async function loadYufaData(){
         mainContent.innerHTML = `
           <div class="empty-state">
             <div class="cn">無数据</div>
-            <div>Không tải được dữ liệu từ YUFA.xlsx. Hãy chắc chắn file này được đặt cùng thư mục với index.html rồi tải lại trang.</div>
+            <div>Không tải được dữ liệu Giáo trình HSK chuẩn (file YUFA.xlsx). Hãy chắc chắn file này được đặt cùng thư mục với index.html rồi tải lại trang.</div>
           </div>`;
       } else {
         setLevel('all');
@@ -7212,14 +7211,13 @@ const searchInput = document.getElementById('searchInput');
 const importPanel = document.getElementById('importPanel');
 let activeLevel = 'all';
 let activeLesson = 'all';
-let activeCurriculum = 'hsk';
-let DATA = HSK_DATA;
+let activeCurriculum = 'yufa';
+let DATA = [];
 
 function dataForCurriculum(c){
   if(c === 'boya') return BOYA_DATA;
   if(c === 'custom') return buildCustomData();
-  if(c === 'yufa') return YUFA_DATA;
-  return HSK_DATA;
+  return YUFA_DATA;
 }
 
 document.querySelectorAll('.curriculum-btn').forEach(btn=>{
@@ -7236,7 +7234,7 @@ document.querySelectorAll('.curriculum-btn').forEach(btn=>{
       mainContent.innerHTML = `
         <div class="empty-state">
           <div class="cn">加载中</div>
-          <div>Đang tải dữ liệu Ngữ pháp YUFA từ file YUFA.xlsx...</div>
+          <div>Đang tải dữ liệu Giáo trình HSK chuẩn...</div>
         </div>`;
       loadYufaData();
       return;
@@ -7584,8 +7582,17 @@ document.getElementById('btnClearCustom').addEventListener('click', ()=>{
   showImportMsg('Đã xóa toàn bộ mục tự nhập.', true);
 });
 
-buildNav();
-render();
+if(activeCurriculum === 'yufa' && !yufaLoaded){
+  mainContent.innerHTML = `
+    <div class="empty-state">
+      <div class="cn">加载中</div>
+      <div>Đang tải dữ liệu Giáo trình HSK chuẩn...</div>
+    </div>`;
+  loadYufaData();
+} else {
+  buildNav();
+  render();
+}
 </script>
 
     </div>
