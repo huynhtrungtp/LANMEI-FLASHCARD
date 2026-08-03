@@ -6213,6 +6213,7 @@
   <div class="source-tags" id="curriculumSwitcher">
     <button type="button" class="source-tag curriculum-btn active" data-curriculum="hsk"><b>Giáo trình HSK chuẩn</b></button>
     <button type="button" class="source-tag curriculum-btn" data-curriculum="boya"><b>Giáo trình Boya</b></button>
+    <button type="button" class="source-tag curriculum-btn" data-curriculum="yufa"><b>Ngữ pháp YUFA</b></button>
     <button type="button" class="source-tag curriculum-btn" data-curriculum="custom"><b>✎ Tự nhập</b></button>
   </div>
 </header>
@@ -7083,6 +7084,126 @@ function buildCustomData(){
   }];
 }
 
+/* ---------- "Ngữ pháp YUFA" curriculum: nạp dữ liệu từ file YUFA.xlsx ----------
+   File YUFA.xlsx cần đặt CÙNG THƯ MỤC với index.html. Mỗi sheet trong file
+   (VD: HSK1, HSK2, HSK3, ...) sẽ tự động biến thành một khối trình độ riêng,
+   dùng chung định dạng cột như file mẫu Boya/HSK chuẩn:
+   Bài, Tiêu đề, Cấu trúc, Tóm tắt, Giải thích, Ví dụ Trung 1, Ví dụ Pinyin 1,
+   Ví dụ Nghĩa 1, Ví dụ Trung 2, Ví dụ Pinyin 2, Ví dụ Nghĩa 2, Lưu ý, Tham chiếu.
+   Cột "Bài" có thể có (kiểu HSK) hoặc không có (kiểu Boya) — cả hai đều đọc được. */
+function parseYufaSheet(sheetName, rows){
+  if(!rows || !rows.length) return null;
+  const keys = Object.keys(rows[0]);
+  let kBai=null, kTitle=null, kStruct=null, kBrief=null, kExplain=null,
+      kExCn1=null, kExPy1=null, kExVn1=null,
+      kExCn2=null, kExPy2=null, kExVn2=null,
+      kNote=null, kRefs=null;
+  keys.forEach(k=>{
+    const n = normHeader(k);
+    if(!kBai     && (n==='bai' || n==='lesson'))                      kBai = k;
+    if(!kTitle   && (n==='tieude' || n==='title'))                    kTitle = k;
+    if(!kStruct  && (n==='cautruc' || n==='structure'))               kStruct = k;
+    if(!kBrief   && (n==='tomtat' || n==='brief'))                    kBrief = k;
+    if(!kExplain && (n==='giaithich' || n==='explain'))               kExplain = k;
+    if(!kExCn1   && (n==='vidutrung1' || n==='examplecn1' || n==='vidutrung' || n==='examplecn'))       kExCn1 = k;
+    if(!kExPy1   && (n==='vidupinyin1' || n==='examplepinyin1' || n==='vidupinyin' || n==='examplepinyin')) kExPy1 = k;
+    if(!kExVn1   && (n==='vidunghia1' || n==='examplevn1' || n==='vidunghia' || n==='examplevn'))       kExVn1 = k;
+    if(!kExCn2   && (n==='vidutrung2' || n==='examplecn2'))           kExCn2 = k;
+    if(!kExPy2   && (n==='vidupinyin2' || n==='examplepinyin2'))      kExPy2 = k;
+    if(!kExVn2   && (n==='vidunghia2' || n==='examplevn2'))           kExVn2 = k;
+    if(!kNote    && (n==='luuy' || n==='note'))                       kNote = k;
+    if(!kRefs    && (n==='thamchieu' || n==='refs'))                  kRefs = k;
+  });
+  if(!kTitle) return null;
+
+  const items = [];
+  rows.forEach(row=>{
+    const t = String(row[kTitle] || '').trim();
+    if(!t) return;
+    const exCn1 = kExCn1 ? String(row[kExCn1] || '').trim() : '';
+    const exPy1 = kExPy1 ? String(row[kExPy1] || '').trim() : '';
+    const exVn1 = kExVn1 ? String(row[kExVn1] || '').trim() : '';
+    const exCn2 = kExCn2 ? String(row[kExCn2] || '').trim() : '';
+    const exPy2 = kExPy2 ? String(row[kExPy2] || '').trim() : '';
+    const exVn2 = kExVn2 ? String(row[kExVn2] || '').trim() : '';
+    const examples = [];
+    if(exCn1) examples.push([exCn1, exPy1, exVn1]);
+    if(exCn2) examples.push([exCn2, exPy2, exVn2]);
+    const refsRaw = kRefs ? String(row[kRefs] || '').trim() : '';
+
+    const item = {
+      t: t,
+      s: kStruct ? String(row[kStruct] || '').trim() : '',
+      brief: kBrief ? String(row[kBrief] || '').trim() : '',
+      explain: kExplain ? String(row[kExplain] || '').trim() : '',
+      examples: examples,
+      note: kNote ? String(row[kNote] || '').trim() : '',
+      refs: refsRaw ? refsRaw.split(/[,;]/).map(r=>r.trim()).filter(Boolean) : []
+    };
+    if(kBai){
+      const baiNum = parseInt(String(row[kBai]).replace(/[^\d]/g,''), 10);
+      if(!isNaN(baiNum)) item.bai = baiNum;
+    }
+    items.push(item);
+  });
+  if(!items.length) return null;
+
+  const baiSet = new Set(items.map(it=>it.bai).filter(n=>n!=null));
+  const lessons = Array.from(baiSet).sort((a,b)=>a-b);
+  const numMatch = sheetName.match(/\d+/);
+
+  return {
+    level: 'yufa_' + normHeader(sheetName),
+    levelName: sheetName,
+    sub: `Ngữ pháp YUFA — nhập từ file YUFA.xlsx · ${items.length} điểm ngữ pháp`,
+    stamp: numMatch ? numMatch[0] : sheetName.charAt(0),
+    items: items,
+    lessons: lessons
+  };
+}
+
+let YUFA_DATA = [];
+let yufaLoaded = false;
+let yufaLoading = false;
+
+async function loadYufaData(){
+  if(yufaLoaded || yufaLoading) return;
+  yufaLoading = true;
+  try{
+    const res = await fetch('YUFA.xlsx');
+    if(!res.ok) throw new Error('Không tìm thấy file YUFA.xlsx cạnh index.html');
+    const buf = await res.arrayBuffer();
+    const wb = XLSX.read(new Uint8Array(buf), {type:'array'});
+    const blocks = [];
+    wb.SheetNames.forEach(sheetName=>{
+      if(!/^hsk\s*\d+/i.test(sheetName.trim())) return; // chỉ lấy các sheet dạng HSK1, HSK2, HSK3...
+      const rows = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], {defval:''});
+      const block = parseYufaSheet(sheetName, rows);
+      if(block) blocks.push(block);
+    });
+    YUFA_DATA = blocks;
+    yufaLoaded = true;
+  }catch(err){
+    console.warn('Không tải được YUFA.xlsx:', err);
+    YUFA_DATA = [];
+  }finally{
+    yufaLoading = false;
+    if(activeCurriculum === 'yufa'){
+      DATA = YUFA_DATA;
+      buildNav();
+      if(!YUFA_DATA.length){
+        mainContent.innerHTML = `
+          <div class="empty-state">
+            <div class="cn">無数据</div>
+            <div>Không tải được dữ liệu từ YUFA.xlsx. Hãy chắc chắn file này được đặt cùng thư mục với index.html rồi tải lại trang.</div>
+          </div>`;
+      } else {
+        setLevel('all');
+      }
+    }
+  }
+}
+
 /* ---------- Build UI ---------- */
 const levelNav = document.getElementById('levelNav');
 const lessonNav = document.getElementById('lessonNav');
@@ -7097,6 +7218,7 @@ let DATA = HSK_DATA;
 function dataForCurriculum(c){
   if(c === 'boya') return BOYA_DATA;
   if(c === 'custom') return buildCustomData();
+  if(c === 'yufa') return YUFA_DATA;
   return HSK_DATA;
 }
 
@@ -7105,9 +7227,22 @@ document.querySelectorAll('.curriculum-btn').forEach(btn=>{
     const c = btn.dataset.curriculum;
     if(c === activeCurriculum) return;
     activeCurriculum = c;
-    DATA = dataForCurriculum(c);
     document.querySelectorAll('.curriculum-btn').forEach(b => b.classList.toggle('active', b === btn));
     importPanel.style.display = (c === 'custom') ? 'block' : 'none';
+
+    if(c === 'yufa' && !yufaLoaded){
+      DATA = [];
+      buildNav();
+      mainContent.innerHTML = `
+        <div class="empty-state">
+          <div class="cn">加载中</div>
+          <div>Đang tải dữ liệu Ngữ pháp YUFA từ file YUFA.xlsx...</div>
+        </div>`;
+      loadYufaData();
+      return;
+    }
+
+    DATA = dataForCurriculum(c);
     buildNav();
     setLevel('all');
   });
