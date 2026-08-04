@@ -2153,6 +2153,10 @@
             <i class="fa-solid fa-book"></i>
             <span>Tra Từ</span>
         </button>
+        <button type="button" data-mode="dialogue" class="bottom-tab-btn" title="Hội Thoại">
+            <i class="fa-solid fa-comments"></i>
+            <span>Hội Thoại</span>
+        </button>
         <button type="button" id="btn-open-grammar-modal-mobile" class="bottom-tab-btn btn-open-grammar-modal-trigger" title="Ngữ Pháp">
             <i class="fa-solid fa-book-open"></i>
             <span>Ngữ Pháp</span>
@@ -2181,6 +2185,11 @@
                 <button data-mode="dictionary" class="tab-btn px-3.5 py-2 rounded-xl text-sm font-semibold text-brand-800/70 hover:text-brand-900 hover:bg-brand-50 transition flex items-center gap-2 whitespace-nowrap">
                     <i class="fa-solid fa-book"></i>
                     <span>Tra Từ</span>
+                </button>
+
+                <button data-mode="dialogue" class="tab-btn px-3.5 py-2 rounded-xl text-sm font-semibold text-brand-800/70 hover:text-brand-900 hover:bg-brand-50 transition flex items-center gap-2 whitespace-nowrap">
+                    <i class="fa-solid fa-comments"></i>
+                    <span>Hội Thoại</span>
                 </button>
 
                 <button id="btn-open-grammar-modal" class="btn-open-grammar-modal-trigger px-3.5 py-2 rounded-xl text-sm font-semibold text-brand-800/70 hover:text-brand-900 hover:bg-brand-50 transition flex items-center gap-2 whitespace-nowrap" title="Mở bảng Ngữ pháp tiếng Trung">
@@ -2346,6 +2355,10 @@
                         <button class="home-card group flex-none w-[98px] sm:w-[112px] bg-white hover:bg-amber-50 border border-brand-200 hover:border-amber-300 rounded-2xl p-3 shadow-sm hover:shadow-md transition flex flex-col items-center gap-2 text-center" data-mode="dictionary">
                             <div class="w-16 h-16 sm:w-[4.5rem] sm:h-[4.5rem] rounded-2xl bg-amber-100 group-hover:bg-amber-200 flex items-center justify-center text-2xl transition">📖</div>
                             <p class="font-bold text-brand-900 text-xs leading-tight">Tra Từ</p>
+                        </button>
+                        <button class="home-card group flex-none w-[98px] sm:w-[112px] bg-white hover:bg-sky-50 border border-brand-200 hover:border-sky-300 rounded-2xl p-3 shadow-sm hover:shadow-md transition flex flex-col items-center gap-2 text-center" data-mode="dialogue">
+                            <div class="w-16 h-16 sm:w-[4.5rem] sm:h-[4.5rem] rounded-2xl bg-sky-100 group-hover:bg-sky-200 flex items-center justify-center text-2xl transition">💬</div>
+                            <p class="font-bold text-brand-900 text-xs leading-tight">Hội Thoại</p>
                         </button>
                         <button class="home-card group flex-none w-[98px] sm:w-[112px] bg-white hover:bg-rose-50 border border-brand-200 hover:border-rose-300 rounded-2xl p-3 shadow-sm hover:shadow-md transition flex flex-col items-center gap-2 text-center" data-mode="grammar">
                             <div class="w-16 h-16 sm:w-[4.5rem] sm:h-[4.5rem] rounded-2xl bg-rose-100 group-hover:bg-rose-200 flex items-center justify-center text-2xl transition">📚</div>
@@ -2891,6 +2904,39 @@
 
             </section>
 
+            <!-- HỘI THOẠI -->
+            <section id="mode-dialogue" class="study-mode hidden flex flex-col w-full gap-5">
+
+                <div class="flex items-center justify-between gap-3 flex-wrap">
+                    <h2 class="font-extrabold text-brand-800 text-xl sm:text-2xl flex items-center gap-2">
+                        <span>💬</span> Hội Thoại
+                    </h2>
+                    <div class="relative" id="dialogue-lesson-dropdown-wrapper">
+                        <button type="button" id="dialogue-lesson-dropdown-btn" class="bg-brand-50 border border-brand-200 text-brand-950 text-sm font-medium rounded-xl px-3.5 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none cursor-pointer min-w-[110px] flex items-center justify-between gap-2">
+                            <span id="dialogue-lesson-dropdown-label">Bài 1</span>
+                            <i class="fa-solid fa-chevron-down text-xs text-brand-400"></i>
+                        </button>
+                        <div id="dialogue-lesson-dropdown-panel" class="hidden absolute right-0 z-30 mt-1.5 w-40 bg-white border border-brand-200 rounded-xl shadow-lg py-1.5 max-h-80 overflow-y-auto">
+                            <!-- Danh sách bài được dựng động bằng JS, xem renderDialogueLessonDropdown() -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab chọn đoạn hội thoại con (X.1 / X.2 / X.3) -->
+                <div class="flex gap-1.5 bg-brand-50 border border-brand-200 rounded-xl p-1 w-fit mx-auto" id="dialogue-sub-tabs">
+                    <!-- Dựng động bằng JS -->
+                </div>
+
+                <div id="dialogue-content" class="bg-white rounded-2xl border border-brand-200 shadow-sm p-4 sm:p-6 max-w-2xl mx-auto w-full flex flex-col gap-3 min-h-[240px]">
+                    <!-- Các dòng hội thoại được dựng động bằng JS, xem renderDialogue() -->
+                </div>
+
+                <div id="dialogue-empty-state" class="hidden text-center text-brand-500 text-sm py-10">
+                    Không tải được dữ liệu hội thoại (file <code>HỘI_THOẠI.xlsx</code>). Hãy chắc chắn file này được đặt cùng thư mục với <code>index.html</code> rồi tải lại trang.
+                </div>
+
+            </section>
+
         </div>
 
     </main>
@@ -3221,6 +3267,90 @@
             return vocab;
         }
 
+        // ═══════════════════════════════════════════════════════════════
+        // [HỘI THOẠI] Tải và phân tích file HỘI_THOẠI.xlsx (đặt cùng thư mục
+        // với index.html). Sheet "ĐOẠN HỘI THOẠI" có cấu trúc:
+        //   - 1 dòng chỉ có số ở cột A (vd: 1, 2, 3...) = đánh dấu bắt đầu 1 BÀI mới.
+        //   - Dòng đầu tiên của mỗi đoạn hội thoại con có cột A là 1 giá trị đặc biệt
+        //     xác định "Bài X . Đoạn Y" (vd: X.1, X.2, X.3), cột B = tên nhân vật,
+        //     cột C = câu thoại.
+        //   - Các dòng tiếp theo của cùng đoạn: cột A để trống, cột B = nhân vật,
+        //     cột C = câu thoại.
+        // Kết quả: { 1: { 1: [ {speaker, text}, ... ], 2: [...], 3: [...] }, 2: {...}, ... }
+        // ═══════════════════════════════════════════════════════════════
+        async function loadDialogueFromExcel() {
+            const res = await fetch(encodeURI('HỘI_THOẠI.xlsx'));
+            if (!res.ok) throw new Error('Không tìm thấy HỘI_THOẠI.xlsx (HTTP ' + res.status + ')');
+            const buf = await res.arrayBuffer();
+            const workbook = XLSX.read(buf, { type: 'array' });
+
+            const sheetName = workbook.SheetNames.find(n => normalizeSheetCode(n) === normalizeSheetCode('ĐOẠN HỘI THOẠI'))
+                || workbook.SheetNames.find(n => /hoi.?thoai/i.test(normalizeSheetCode(n)))
+                || workbook.SheetNames[0];
+            const sheet = workbook.Sheets[sheetName];
+            // header:1 => trả về mảng-mảng theo đúng thứ tự dòng/cột gốc, giữ được các dòng
+            // "trống cột A" (tiếp theo của cùng 1 đoạn hội thoại) đúng như trong Excel.
+            const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null, raw: true });
+
+            // Excel lưu ngày dạng số serial khi raw:true — hàm này đổi lại thành {month, day}
+            // giống hệt cách Excel hiển thị ngày 01/03/2026 => day=1 (số bài), month=3 (đoạn thứ mấy).
+            function excelSerialToMonthDay(serial) {
+                // Ngày gốc Excel (hệ Windows 1900, đã bù lỗi năm nhuận 1900 mà SheetJS/Excel dùng)
+                const epoch = new Date(Date.UTC(1899, 11, 30));
+                const ms = epoch.getTime() + serial * 24 * 60 * 60 * 1000;
+                const d = new Date(ms);
+                return { day: d.getUTCDate(), month: d.getUTCMonth() + 1 };
+            }
+
+            const lessons = {}; // { lessonNum: { subNum: [ {speaker, text}, ... ] } }
+            let curLesson = null;
+            let curSub = null;
+
+            rows.forEach(row => {
+                const a = row[0], b = row[1] ?? null, c = row[2] ?? null;
+                const bStr = b !== null && b !== undefined ? String(b).trim() : '';
+                const cStr = c !== null && c !== undefined ? String(c).trim() : '';
+
+                if (a === null || a === undefined || a === '') {
+                    // Dòng tiếp nối của đoạn hội thoại hiện tại (không có mốc mới ở cột A)
+                    if (curLesson !== null && curSub !== null && (bStr || cStr)) {
+                        lessons[curLesson][curSub].push({ speaker: bStr, text: cStr });
+                    }
+                    return;
+                }
+
+                // Dòng chỉ đánh dấu "Bài N" mới (cột B và C trống)
+                if (typeof a === 'number' && Number.isInteger(a) && !bStr && !cStr) {
+                    curLesson = a;
+                    if (!lessons[curLesson]) lessons[curLesson] = {};
+                    curSub = null;
+                    return;
+                }
+
+                // Dòng là ngày Excel (serial number) => bắt đầu 1 đoạn hội thoại con mới
+                if (typeof a === 'number') {
+                    let lessonNum, subNum;
+                    if (Number.isInteger(a) && a > 100) {
+                        // giá trị serial ngày Excel thực sự (đủ lớn, không thể là số Bài/Đoạn)
+                        const md = excelSerialToMonthDay(a);
+                        lessonNum = md.day;
+                        subNum = md.month;
+                    } else {
+                        // giá trị dạng thập phân kiểu 15.2 => Bài 15, đoạn 2
+                        lessonNum = Math.trunc(a);
+                        subNum = Math.round((a - lessonNum) * 10) || 1;
+                    }
+                    curLesson = lessonNum;
+                    curSub = subNum;
+                    if (!lessons[curLesson]) lessons[curLesson] = {};
+                    if (!lessons[curLesson][curSub]) lessons[curLesson][curSub] = [];
+                    if (bStr || cStr) lessons[curLesson][curSub].push({ speaker: bStr, text: cStr });
+                }
+            });
+
+            return lessons;
+        }
+
         // Dựng lại danh sách các mục chọn trong "Sổ tay" (Từ vựng HSK / Giáo trình HSK 3.0)
         // dựa trên những giáo trình THỰC SỰ có dữ liệu sau khi tải Tu vung.xlsx —
         // sheet nào không có trong file Excel sẽ tự động hiện "Sắp có".
@@ -3304,6 +3434,11 @@
             currentLesson: 'ALL',
             statusFilter: localStorage.getItem('zh_status_filter') || 'ALL',
             filteredVocab: [],
+
+            // [HỘI THOẠI] Dữ liệu đọc từ HỘI_THOẠI.xlsx: { [bài]: { [đoạn]: [ {speaker,text}, ... ] } }
+            dialogueData: {},
+            dialogueLesson: null,
+            dialogueSub: 1,
             
             // Flashcard State
             cardIndex: 0,
@@ -3947,6 +4082,146 @@
             }, duration);
         }
 
+        // ═══════════════════════════════════════════════════════════════
+        // [HỘI THOẠI] Render giao diện: dropdown chọn Bài, tab chọn đoạn
+        // (X.1 / X.2 / X.3) và khung chat hiển thị các câu thoại.
+        // ═══════════════════════════════════════════════════════════════
+        function getDialogueLessonNumbers() {
+            return Object.keys(appState.dialogueData).map(n => parseInt(n, 10)).sort((a, b) => a - b);
+        }
+
+        function renderDialogueLessonDropdown() {
+            const panel = document.getElementById('dialogue-lesson-dropdown-panel');
+            const label = document.getElementById('dialogue-lesson-dropdown-label');
+            if (!panel) return;
+            const lessonNums = getDialogueLessonNumbers();
+            if (lessonNums.length === 0) {
+                panel.innerHTML = '<div class="px-3.5 py-2 text-sm text-slate-400">Không có dữ liệu</div>';
+                return;
+            }
+            if (appState.dialogueLesson === null || !lessonNums.includes(appState.dialogueLesson)) {
+                appState.dialogueLesson = lessonNums[0];
+            }
+            panel.innerHTML = lessonNums.map(n => `
+                <button type="button" class="dialogue-lesson-option w-full text-left px-3.5 py-2 text-sm rounded-lg transition ${n === appState.dialogueLesson ? 'bg-brand-500 text-white font-bold' : 'text-brand-800 hover:bg-brand-50'}" data-lesson="${n}">Bài ${n}</button>
+            `).join('');
+            label.textContent = `Bài ${appState.dialogueLesson}`;
+
+            panel.querySelectorAll('.dialogue-lesson-option').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    appState.dialogueLesson = parseInt(btn.getAttribute('data-lesson'), 10);
+                    appState.dialogueSub = 1;
+                    panel.classList.add('hidden');
+                    renderDialogueLessonDropdown();
+                    renderDialogue();
+                });
+            });
+        }
+
+        function renderDialogueSubTabs() {
+            const wrap = document.getElementById('dialogue-sub-tabs');
+            if (!wrap) return;
+            const lesson = appState.dialogueLesson;
+            const subs = lesson !== null && appState.dialogueData[lesson] ? Object.keys(appState.dialogueData[lesson]).map(n => parseInt(n, 10)).sort((a, b) => a - b) : [];
+            if (!subs.includes(appState.dialogueSub)) appState.dialogueSub = subs[0] || 1;
+
+            wrap.innerHTML = subs.map(s => `
+                <button type="button" data-sub="${s}" class="dialogue-sub-tab-btn px-4 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition ${s === appState.dialogueSub ? 'bg-brand-500 text-white shadow-md shadow-brand-500/20' : 'text-brand-700 hover:bg-brand-100'}">${lesson}.${s}</button>
+            `).join('');
+
+            wrap.querySelectorAll('.dialogue-sub-tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    appState.dialogueSub = parseInt(btn.getAttribute('data-sub'), 10);
+                    renderDialogueSubTabs();
+                    renderDialogueBubbles();
+                });
+            });
+        }
+
+        // Bảng màu bong bóng chat theo tên nhân vật, để mỗi người nói có 1 màu ổn định xuyên suốt bài.
+        const DIALOGUE_SPEAKER_COLORS = [
+            { bg: 'bg-brand-100', text: 'text-brand-900', badge: 'bg-brand-500' },
+            { bg: 'bg-amber-100', text: 'text-amber-900', badge: 'bg-amber-500' },
+            { bg: 'bg-emerald-100', text: 'text-emerald-900', badge: 'bg-emerald-500' },
+            { bg: 'bg-rose-100', text: 'text-rose-900', badge: 'bg-rose-500' },
+            { bg: 'bg-indigo-100', text: 'text-indigo-900', badge: 'bg-indigo-500' },
+            { bg: 'bg-teal-100', text: 'text-teal-900', badge: 'bg-teal-500' },
+        ];
+
+        function renderDialogueBubbles() {
+            const container = document.getElementById('dialogue-content');
+            const emptyState = document.getElementById('dialogue-empty-state');
+            if (!container) return;
+            const lesson = appState.dialogueLesson;
+            const sub = appState.dialogueSub;
+            const lines = (lesson !== null && appState.dialogueData[lesson] && appState.dialogueData[lesson][sub]) || [];
+
+            if (lines.length === 0) {
+                container.innerHTML = '';
+                if (emptyState) emptyState.classList.remove('hidden');
+                return;
+            }
+            if (emptyState) emptyState.classList.add('hidden');
+
+            // Gán màu cố định cho từng nhân vật xuất hiện trong đoạn hội thoại này
+            const speakerColorMap = {};
+            let colorIdx = 0;
+            lines.forEach(l => {
+                if (!speakerColorMap[l.speaker]) {
+                    speakerColorMap[l.speaker] = DIALOGUE_SPEAKER_COLORS[colorIdx % DIALOGUE_SPEAKER_COLORS.length];
+                    colorIdx++;
+                }
+            });
+
+            container.innerHTML = `
+                <p class="text-center text-xs font-bold text-brand-400 uppercase tracking-wider mb-1">Bài ${lesson}.${sub}</p>
+                ${lines.map(l => {
+                    const c = speakerColorMap[l.speaker] || DIALOGUE_SPEAKER_COLORS[0];
+                    return `
+                    <div class="flex flex-col gap-1 max-w-[85%] ${'self-start'}">
+                        <span class="text-[11px] font-bold text-brand-500 px-1">${escapeHtml(l.speaker)}</span>
+                        <div class="flex items-start gap-2">
+                            <div class="${c.bg} ${c.text} rounded-2xl rounded-tl-sm px-4 py-2.5 font-hanzi text-lg leading-snug shadow-sm">
+                                ${escapeHtml(l.text)}
+                            </div>
+                            <button type="button" class="dialogue-speak-btn shrink-0 mt-1 w-8 h-8 rounded-full ${c.badge} text-white flex items-center justify-center shadow-sm hover:opacity-90 transition" data-text="${escapeHtml(l.text)}" title="Nghe phát âm">
+                                <i class="fa-solid fa-volume-high text-xs"></i>
+                            </button>
+                        </div>
+                    </div>`;
+                }).join('')}
+            `;
+
+            container.querySelectorAll('.dialogue-speak-btn').forEach(btn => {
+                btn.addEventListener('click', () => speakHanzi(btn.getAttribute('data-text')));
+            });
+        }
+
+        function renderDialogue() {
+            const lessonNums = getDialogueLessonNumbers();
+            if (lessonNums.length === 0) {
+                document.getElementById('dialogue-content').innerHTML = '';
+                document.getElementById('dialogue-sub-tabs').innerHTML = '';
+                const emptyState = document.getElementById('dialogue-empty-state');
+                if (emptyState) emptyState.classList.remove('hidden');
+                return;
+            }
+            renderDialogueLessonDropdown();
+            renderDialogueSubTabs();
+            renderDialogueBubbles();
+        }
+
+        function setupDialogueEvents() {
+            const btn = document.getElementById('dialogue-lesson-dropdown-btn');
+            const panel = document.getElementById('dialogue-lesson-dropdown-panel');
+            if (!btn || !panel) return;
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                panel.classList.toggle('hidden');
+            });
+            document.addEventListener('click', () => panel.classList.add('hidden'));
+        }
+
         window.onload = async function() {
             const savedCustom = localStorage.getItem('zh_custom_vocab');
             const customVocab = savedCustom ? JSON.parse(savedCustom) : [];
@@ -3964,6 +4239,14 @@
             rebuildHskDropdownAvailability();
             rebuildLessonDropdown();
 
+            try {
+                appState.dialogueData = await loadDialogueFromExcel();
+            } catch (err) {
+                console.error('Lỗi tải HỘI_THOẠI.xlsx:', err);
+                appState.dialogueData = {};
+                showToast('Không tải được HỘI_THOẠI.xlsx — kiểm tra file có đúng tên, nằm cùng thư mục index.html.', 'error', 6000);
+            }
+
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.getVoices();
                 window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
@@ -3977,6 +4260,7 @@
             setupTranslateEvents();
             setupQuizEvents();
             setupDictionaryEvents();
+            setupDialogueEvents();
             setupHomeSearch();
             setupModalEvents();
             setupSettingsModalEvents();
@@ -4047,6 +4331,7 @@
             else if (mode === 'translate') { appState.translateUsedIds = new Set(); initTranslateQuiz(); }
             else if (mode === 'quiz') { appState.quizUsedIds = new Set(); initQuiz(); }
             else if (mode === 'dictionary') renderDictionary();
+            else if (mode === 'dialogue') renderDialogue();
             else if (mode === 'home') renderHome();
             else if (mode === 'grammar') { switchMode('flashcard'); showToast('Tính năng Ngữ Pháp sắp ra mắt! 🚀', 'info'); }
         }
