@@ -4175,6 +4175,9 @@
 
             container.innerHTML = `
                 <p class="text-center text-xs font-bold text-brand-400 uppercase tracking-wider mb-1">Bài ${lesson}.${sub}</p>
+                <div id="dialogue-audio-wrapper" class="hidden mb-2">
+                    <audio id="dialogue-audio-player" controls preload="none" class="w-full h-10"></audio>
+                </div>
                 ${lines.map(l => {
                     const c = speakerColorMap[l.speaker] || DIALOGUE_SPEAKER_COLORS[0];
                     return `
@@ -4194,6 +4197,32 @@
 
             container.querySelectorAll('.dialogue-speak-btn').forEach(btn => {
                 btn.addEventListener('click', () => speakHanzi(btn.getAttribute('data-text')));
+            });
+
+            // [HỘI THOẠI] Nếu có file ghi âm thật đặt cùng thư mục index.html theo quy ước
+            // tên file "<Bài>_<Đoạn>.mp3" (vd: bài 4.1 => "4_1.mp3"), hiển thị trình phát để
+            // nghe file ghi âm thật thay vì chỉ giọng đọc máy (TTS) ở từng câu.
+            loadDialogueAudio(lesson, sub);
+        }
+
+        // Thử tải file ghi âm thật cho đoạn hội thoại hiện tại. Nếu không tìm thấy file,
+        // ẩn trình phát đi và người dùng vẫn dùng được nút 🔊 (TTS) ở từng câu như cũ.
+        function loadDialogueAudio(lesson, sub) {
+            const wrapper = document.getElementById('dialogue-audio-wrapper');
+            const player = document.getElementById('dialogue-audio-player');
+            if (!wrapper || !player) return;
+            const src = encodeURI(`${lesson}_${sub}.mp3`);
+
+            wrapper.classList.add('hidden');
+            player.removeAttribute('src');
+
+            fetch(src, { method: 'HEAD' }).then(res => {
+                if (!res.ok) throw new Error('not found');
+                player.src = src;
+                wrapper.classList.remove('hidden');
+            }).catch(() => {
+                // Không có file ghi âm cho đoạn này — giữ nguyên trình phát ẩn đi.
+                wrapper.classList.add('hidden');
             });
         }
 
