@@ -3302,19 +3302,41 @@
                 return { day: d.getUTCDate(), month: d.getUTCMonth() + 1 };
             }
 
-            const lessons = {}; // { lessonNum: { subNum: [ {speaker, text}, ... ] } }
+            // Cho phép nhập thời gian bắt đầu của từng câu ở cột D (không bắt buộc), dùng để
+            // bấm nút 🔊 sẽ tự nhảy đến đúng đoạn trong file mp3 ghi âm cả bài (vd 4_1.mp3).
+            // Có thể nhập dạng số giây (vd 3.5) hoặc dạng phút:giây (vd 0:03, 1:05).
+            function parseTimeCell(val) {
+                if (val === null || val === undefined || val === '') return null;
+                if (typeof val === 'number') {
+                    // SheetJS trả về số giờ dạng phân số (0..1) nếu ô được định dạng Time trong Excel
+                    return val < 1 ? val * 24 * 60 * 60 : val;
+                }
+                const str = String(val).trim();
+                if (/^\d+(\.\d+)?$/.test(str)) return parseFloat(str);
+                const m = str.match(/^(\d+):(\d{1,2})(?::(\d{1,2}))?$/);
+                if (m) {
+                    const h = m[3] ? parseInt(m[1], 10) : 0;
+                    const mm = m[3] ? parseInt(m[2], 10) : parseInt(m[1], 10);
+                    const ss = m[3] ? parseInt(m[3], 10) : parseInt(m[2], 10);
+                    return h * 3600 + mm * 60 + ss;
+                }
+                return null;
+            }
+
+            const lessons = {}; // { lessonNum: { subNum: [ {speaker, text, time}, ... ] } }
             let curLesson = null;
             let curSub = null;
 
             rows.forEach(row => {
-                const a = row[0], b = row[1] ?? null, c = row[2] ?? null;
+                const a = row[0], b = row[1] ?? null, c = row[2] ?? null, d = row[3] ?? null;
                 const bStr = b !== null && b !== undefined ? String(b).trim() : '';
                 const cStr = c !== null && c !== undefined ? String(c).trim() : '';
+                const time = parseTimeCell(d);
 
                 if (a === null || a === undefined || a === '') {
                     // Dòng tiếp nối của đoạn hội thoại hiện tại (không có mốc mới ở cột A)
                     if (curLesson !== null && curSub !== null && (bStr || cStr)) {
-                        lessons[curLesson][curSub].push({ speaker: bStr, text: cStr });
+                        lessons[curLesson][curSub].push({ speaker: bStr, text: cStr, time });
                     }
                     return;
                 }
@@ -3344,7 +3366,7 @@
                     curSub = subNum;
                     if (!lessons[curLesson]) lessons[curLesson] = {};
                     if (!lessons[curLesson][curSub]) lessons[curLesson][curSub] = [];
-                    if (bStr || cStr) lessons[curLesson][curSub].push({ speaker: bStr, text: cStr });
+                    if (bStr || cStr) lessons[curLesson][curSub].push({ speaker: bStr, text: cStr, time });
                 }
             });
 
@@ -4178,8 +4200,9 @@
                 <div id="dialogue-audio-wrapper" class="hidden mb-2">
                     <audio id="dialogue-audio-player" controls preload="none" class="w-full h-10"></audio>
                 </div>
-                ${lines.map(l => {
+                ${lines.map((l, idx) => {
                     const c = speakerColorMap[l.speaker] || DIALOGUE_SPEAKER_COLORS[0];
+                    const hasTime = typeof l.time === 'number' && !isNaN(l.time);
                     return `
                     <div class="flex flex-col gap-1 max-w-[85%] ${'self-start'}">
                         <span class="text-[11px] font-bold text-brand-500 px-1">${escapeHtml(l.speaker)}</span>
@@ -4187,7 +4210,7 @@
                             <div class="${c.bg} ${c.text} rounded-2xl rounded-tl-sm px-4 py-2.5 font-hanzi text-lg leading-snug shadow-sm">
                                 ${escapeHtml(l.text)}
                             </div>
-                            <button type="button" class="dialogue-speak-btn shrink-0 mt-1 w-8 h-8 rounded-full ${c.badge} text-white flex items-center justify-center shadow-sm hover:opacity-90 transition" data-text="${escapeHtml(l.text)}" title="Nghe phát âm">
+                            <button type="button" class="dialogue-speak-btn shrink-0 mt-1 w-8 h-8 rounded-full ${c.badge} text-white flex items-center justify-center shadow-sm hover:opacity-90 transition" data-text="${escapeHtml(l.text)}" data-line-index="${idx}" ${hasTime ? `data-time="${l.time}"` : ''} title="Nghe phát âm">
                                 <i class="fa-solid fa-volume-high text-xs"></i>
                             </button>
                         </div>
@@ -4195,8 +4218,25 @@
                 }).join('')}
             `;
 
+            // Danh sách thời gian bắt đầu của tất cả các câu trong đoạn này (để biết lúc nào
+            // cần tự dừng lại — tức là lúc bắt đầu câu kế tiếp).
+            const lineTimes = lines.map(l => (typeof l.time === 'number' && !isNaN(l.time)) ? l.time : null);
+
             container.querySelectorAll('.dialogue-speak-btn').forEach(btn => {
-                btn.addEventListener('click', () => speakHanzi(btn.getAttribute('data-text')));
+                btn.addEventListener('click', () => {
+                    const idx = parseInt(btn.getAttribute('data-line-index'), 10);
+                    const hasTime = btn.hasAttribute('data-time');
+                    const player = document.getElementById('dialogue-audio-player');
+                    const wrapper = document.getElementById('dialogue-audio-wrapper');
+                    const audioReady = player && wrapper && !wrapper.classList.contains('hidden') && player.src;
+
+                    if (hasTime && audioReady) {
+                        playDialogueAudioSegment(player, lineTimes, idx);
+                    } else {
+                        // Chưa có mốc thời gian cho câu này (hoặc chưa có file mp3) => dùng giọng đọc máy
+                        speakHanzi(btn.getAttribute('data-text'));
+                    }
+                });
             });
 
             // [HỘI THOẠI] Nếu có file ghi âm thật đặt cùng thư mục index.html theo quy ước
@@ -4224,6 +4264,38 @@
                 // Không có file ghi âm cho đoạn này — giữ nguyên trình phát ẩn đi.
                 wrapper.classList.add('hidden');
             });
+        }
+
+        // [HỘI THOẠI] Phát 1 đoạn (câu) trong file mp3 ghi âm cả bài: nhảy đến đúng giây bắt đầu
+        // của câu (lineTimes[idx]) và tự dừng lại khi chạm mốc thời gian của câu kế tiếp.
+        let _dialogueSegmentStopHandler = null;
+        function playDialogueAudioSegment(player, lineTimes, idx) {
+            // Hủy trình theo dõi của lượt phát trước (nếu có) để tránh chồng nhiều listener
+            if (_dialogueSegmentStopHandler) {
+                player.removeEventListener('timeupdate', _dialogueSegmentStopHandler);
+                _dialogueSegmentStopHandler = null;
+            }
+
+            const startTime = lineTimes[idx];
+            // Tìm mốc bắt đầu của câu kế tiếp có khai báo thời gian để biết lúc nào cần dừng
+            let endTime = null;
+            for (let i = idx + 1; i < lineTimes.length; i++) {
+                if (typeof lineTimes[i] === 'number') { endTime = lineTimes[i]; break; }
+            }
+
+            player.currentTime = startTime;
+            player.play();
+
+            if (endTime !== null) {
+                _dialogueSegmentStopHandler = function () {
+                    if (player.currentTime >= endTime - 0.05) {
+                        player.pause();
+                        player.removeEventListener('timeupdate', _dialogueSegmentStopHandler);
+                        _dialogueSegmentStopHandler = null;
+                    }
+                };
+                player.addEventListener('timeupdate', _dialogueSegmentStopHandler);
+            }
         }
 
         function renderDialogue() {
