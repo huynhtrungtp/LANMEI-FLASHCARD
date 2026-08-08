@@ -2931,7 +2931,11 @@
                     </div>
                     <button type="button" id="dialogue-pinyin-toggle-btn" class="flex items-center gap-1.5 bg-brand-50 border border-brand-200 hover:bg-brand-100 text-brand-700 text-xs sm:text-sm font-bold rounded-xl px-3 py-2 transition">
                         <i class="fa-solid fa-eye"></i>
-                        <span>Hiện Pinyin</span>
+                        <span>Pinyin</span>
+                    </button>
+                    <button type="button" id="dialogue-meaning-toggle-btn" class="flex items-center gap-1.5 bg-brand-50 border border-brand-200 hover:bg-brand-100 text-brand-700 text-xs sm:text-sm font-bold rounded-xl px-3 py-2 transition">
+                        <i class="fa-solid fa-eye"></i>
+                        <span>Nghĩa</span>
                     </button>
                 </div>
 
@@ -3281,10 +3285,11 @@
         //   - 1 dòng chỉ có số ở cột A (vd: 1, 2, 3...) = đánh dấu bắt đầu 1 BÀI mới.
         //   - Dòng đầu tiên của mỗi đoạn hội thoại con có cột A là 1 giá trị đặc biệt
         //     xác định "Bài X . Đoạn Y" (vd: X.1, X.2, X.3), cột B = tên nhân vật,
-        //     cột C = câu thoại.
+        //     cột C = câu thoại, cột D = thời gian bắt đầu trong file mp3 (không bắt buộc),
+        //     cột E = nghĩa tiếng Việt của câu (không bắt buộc).
         //   - Các dòng tiếp theo của cùng đoạn: cột A để trống, cột B = nhân vật,
-        //     cột C = câu thoại.
-        // Kết quả: { 1: { 1: [ {speaker, text}, ... ], 2: [...], 3: [...] }, 2: {...}, ... }
+        //     cột C = câu thoại, cột D/E như trên.
+        // Kết quả: { 1: { 1: [ {speaker, text, time, meaningVi}, ... ], 2: [...], 3: [...] }, 2: {...}, ... }
         // ═══════════════════════════════════════════════════════════════
         async function loadDialogueFromExcel() {
             const res = await fetch(encodeURI('HỘI_THOẠI.xlsx'));
@@ -3336,15 +3341,16 @@
             let curSub = null;
 
             rows.forEach(row => {
-                const a = row[0], b = row[1] ?? null, c = row[2] ?? null, d = row[3] ?? null;
+                const a = row[0], b = row[1] ?? null, c = row[2] ?? null, d = row[3] ?? null, e = row[4] ?? null;
                 const bStr = b !== null && b !== undefined ? String(b).trim() : '';
                 const cStr = c !== null && c !== undefined ? String(c).trim() : '';
+                const eStr = e !== null && e !== undefined ? String(e).trim() : '';
                 const time = parseTimeCell(d);
 
                 if (a === null || a === undefined || a === '') {
                     // Dòng tiếp nối của đoạn hội thoại hiện tại (không có mốc mới ở cột A)
                     if (curLesson !== null && curSub !== null && (bStr || cStr)) {
-                        lessons[curLesson][curSub].push({ speaker: bStr, text: cStr, time });
+                        lessons[curLesson][curSub].push({ speaker: bStr, text: cStr, time, meaningVi: eStr });
                     }
                     return;
                 }
@@ -3374,7 +3380,7 @@
                     curSub = subNum;
                     if (!lessons[curLesson]) lessons[curLesson] = {};
                     if (!lessons[curLesson][curSub]) lessons[curLesson][curSub] = [];
-                    if (bStr || cStr) lessons[curLesson][curSub].push({ speaker: bStr, text: cStr, time });
+                    if (bStr || cStr) lessons[curLesson][curSub].push({ speaker: bStr, text: cStr, time, meaningVi: eStr });
                 }
             });
 
@@ -3470,6 +3476,7 @@
             dialogueLesson: null,
             dialogueSub: 1,
             dialogueShowPinyin: localStorage.getItem('zh_dialogue_show_pinyin') === '1',
+            dialogueShowMeaning: localStorage.getItem('zh_dialogue_show_meaning') === '1',
             
             // Flashcard State
             cardIndex: 0,
@@ -4198,20 +4205,31 @@
             return result;
         }
 
-        // Cập nhật icon + nhãn của nút ẩn/hiện Pinyin theo trạng thái hiện tại
+        // Cập nhật icon của nút ẩn/hiện Pinyin theo trạng thái hiện tại (nhãn luôn là "Pinyin")
         function updateDialoguePinyinToggleBtn() {
             const btn = document.getElementById('dialogue-pinyin-toggle-btn');
             if (!btn) return;
             const icon = btn.querySelector('i');
-            const label = btn.querySelector('span');
             if (appState.dialogueShowPinyin) {
                 btn.classList.add('!bg-brand-500', '!text-white', '!border-brand-500');
                 if (icon) icon.className = 'fa-solid fa-eye-slash';
-                if (label) label.textContent = 'Ẩn Pinyin';
             } else {
                 btn.classList.remove('!bg-brand-500', '!text-white', '!border-brand-500');
                 if (icon) icon.className = 'fa-solid fa-eye';
-                if (label) label.textContent = 'Hiện Pinyin';
+            }
+        }
+
+        // Cập nhật icon của nút ẩn/hiện Nghĩa tiếng Việt (nhãn luôn là "Nghĩa")
+        function updateDialogueMeaningToggleBtn() {
+            const btn = document.getElementById('dialogue-meaning-toggle-btn');
+            if (!btn) return;
+            const icon = btn.querySelector('i');
+            if (appState.dialogueShowMeaning) {
+                btn.classList.add('!bg-brand-500', '!text-white', '!border-brand-500');
+                if (icon) icon.className = 'fa-solid fa-eye-slash';
+            } else {
+                btn.classList.remove('!bg-brand-500', '!text-white', '!border-brand-500');
+                if (icon) icon.className = 'fa-solid fa-eye';
             }
         }
 
@@ -4250,6 +4268,7 @@
                     const hasTime = typeof l.time === 'number' && !isNaN(l.time);
                     const pinyinText = getDialoguePinyin(l.text);
                     const pinyinHiddenClass = appState.dialogueShowPinyin ? '' : 'hidden';
+                    const meaningHiddenClass = appState.dialogueShowMeaning ? '' : 'hidden';
                     return `
                     <div class="flex flex-col gap-1 max-w-[85%] ${'self-start'}">
                         <span class="text-[11px] font-bold text-brand-500 px-1">${escapeHtml(l.speaker)}</span>
@@ -4257,6 +4276,7 @@
                             <div class="${c.bg} ${c.text} rounded-2xl rounded-tl-sm px-4 py-2.5 shadow-sm">
                                 ${pinyinText ? `<p class="dialogue-pinyin-line ${pinyinHiddenClass} text-xs sm:text-sm font-semibold text-brand-500/80 mb-0.5 tracking-wide">${escapeHtml(pinyinText)}</p>` : ''}
                                 <p class="font-hanzi text-lg leading-snug">${escapeHtml(l.text)}</p>
+                                ${l.meaningVi ? `<p class="dialogue-meaning-line ${meaningHiddenClass} text-xs sm:text-sm text-slate-500 italic mt-1 pt-1 border-t border-black/5">${escapeHtml(l.meaningVi)}</p>` : ''}
                             </div>
                             <button type="button" class="dialogue-speak-btn shrink-0 mt-1 w-8 h-8 rounded-full ${c.badge} text-white flex items-center justify-center shadow-sm hover:opacity-90 transition" data-text="${escapeHtml(l.text)}" data-line-index="${idx}" ${hasTime ? `data-time="${l.time}"` : ''} title="Nghe phát âm">
                                 <i class="fa-solid fa-volume-high text-xs"></i>
@@ -4293,6 +4313,7 @@
             loadDialogueAudio(lesson, sub);
 
             updateDialoguePinyinToggleBtn();
+            updateDialogueMeaningToggleBtn();
         }
 
         // Thử tải file ghi âm thật cho đoạn hội thoại hiện tại. Nếu không tìm thấy file,
@@ -4401,6 +4422,19 @@
                         el.classList.toggle('hidden', !appState.dialogueShowPinyin);
                     });
                     updateDialoguePinyinToggleBtn();
+                });
+            }
+
+            // [HỘI THOẠI] Nút ẩn/hiện Nghĩa tiếng Việt — tương tự nút Pinyin ở trên.
+            const meaningToggleBtn = document.getElementById('dialogue-meaning-toggle-btn');
+            if (meaningToggleBtn) {
+                meaningToggleBtn.addEventListener('click', () => {
+                    appState.dialogueShowMeaning = !appState.dialogueShowMeaning;
+                    localStorage.setItem('zh_dialogue_show_meaning', appState.dialogueShowMeaning ? '1' : '0');
+                    document.querySelectorAll('.dialogue-meaning-line').forEach(el => {
+                        el.classList.toggle('hidden', !appState.dialogueShowMeaning);
+                    });
+                    updateDialogueMeaningToggleBtn();
                 });
             }
         }
