@@ -23,6 +23,8 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <!-- HanziWriter JS for Stroke Order Animation & Guided Writing Practice -->
     <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
+    <!-- [HỘI THOẠI] Thư viện chuyển chữ Hán -> Pinyin, dùng để hiện/ẩn pinyin trong phần Hội Thoại -->
+    <script src="https://cdn.jsdelivr.net/npm/pinyin-pro@3.18.2/dist/index.js"></script>
 
     <!-- ═══════════════════════════════════════════════════════════════
          [CẤU HÌNH] Khai báo màu Tailwind mặc định (brand, accent, mint)
@@ -2922,9 +2924,15 @@
                     </div>
                 </div>
 
-                <!-- Tab chọn đoạn hội thoại con (X.1 / X.2 / X.3) -->
-                <div class="flex gap-1.5 bg-brand-50 border border-brand-200 rounded-xl p-1 w-fit mx-auto" id="dialogue-sub-tabs">
-                    <!-- Dựng động bằng JS -->
+                <!-- Tab chọn đoạn hội thoại con (X.1 / X.2 / X.3) + nút ẩn/hiện Pinyin -->
+                <div class="flex items-center justify-center gap-2 flex-wrap">
+                    <div class="flex gap-1.5 bg-brand-50 border border-brand-200 rounded-xl p-1 w-fit" id="dialogue-sub-tabs">
+                        <!-- Dựng động bằng JS -->
+                    </div>
+                    <button type="button" id="dialogue-pinyin-toggle-btn" class="flex items-center gap-1.5 bg-brand-50 border border-brand-200 hover:bg-brand-100 text-brand-700 text-xs sm:text-sm font-bold rounded-xl px-3 py-2 transition">
+                        <i class="fa-solid fa-eye"></i>
+                        <span>Hiện Pinyin</span>
+                    </button>
                 </div>
 
                 <div id="dialogue-content" class="bg-white rounded-2xl border border-brand-200 shadow-sm p-4 sm:p-6 max-w-2xl mx-auto w-full flex flex-col gap-3 min-h-[240px]">
@@ -3461,6 +3469,7 @@
             dialogueData: {},
             dialogueLesson: null,
             dialogueSub: 1,
+            dialogueShowPinyin: localStorage.getItem('zh_dialogue_show_pinyin') === '1',
             
             // Flashcard State
             cardIndex: 0,
@@ -4170,6 +4179,42 @@
             { bg: 'bg-teal-100', text: 'text-teal-900', badge: 'bg-teal-500' },
         ];
 
+        // [HỘI THOẠI] Chuyển chữ Hán -> Pinyin bằng thư viện pinyin-pro (đã nhúng ở đầu trang).
+        // Có cache lại để không phải tính lại pinyin mỗi lần bấm nút ẩn/hiện.
+        const _dialoguePinyinCache = {};
+        function getDialoguePinyin(text) {
+            if (!text) return '';
+            if (_dialoguePinyinCache[text] !== undefined) return _dialoguePinyinCache[text];
+            let result = '';
+            try {
+                if (window.pinyinPro && typeof window.pinyinPro.pinyin === 'function') {
+                    result = window.pinyinPro.pinyin(text, { toneType: 'symbol', type: 'string' });
+                }
+            } catch (e) {
+                console.warn('Không tạo được pinyin cho:', text, e);
+                result = '';
+            }
+            _dialoguePinyinCache[text] = result;
+            return result;
+        }
+
+        // Cập nhật icon + nhãn của nút ẩn/hiện Pinyin theo trạng thái hiện tại
+        function updateDialoguePinyinToggleBtn() {
+            const btn = document.getElementById('dialogue-pinyin-toggle-btn');
+            if (!btn) return;
+            const icon = btn.querySelector('i');
+            const label = btn.querySelector('span');
+            if (appState.dialogueShowPinyin) {
+                btn.classList.add('!bg-brand-500', '!text-white', '!border-brand-500');
+                if (icon) icon.className = 'fa-solid fa-eye-slash';
+                if (label) label.textContent = 'Ẩn Pinyin';
+            } else {
+                btn.classList.remove('!bg-brand-500', '!text-white', '!border-brand-500');
+                if (icon) icon.className = 'fa-solid fa-eye';
+                if (label) label.textContent = 'Hiện Pinyin';
+            }
+        }
+
         function renderDialogueBubbles() {
             const container = document.getElementById('dialogue-content');
             const emptyState = document.getElementById('dialogue-empty-state');
@@ -4198,17 +4243,20 @@
             container.innerHTML = `
                 <p class="text-center text-xs font-bold text-brand-400 uppercase tracking-wider mb-1">Bài ${lesson}.${sub}</p>
                 <div id="dialogue-audio-wrapper" class="hidden mb-2">
-                    <audio id="dialogue-audio-player" controls preload="none" class="w-full h-10"></audio>
+                    <audio id="dialogue-audio-player" controls preload="metadata" class="w-full h-10"></audio>
                 </div>
                 ${lines.map((l, idx) => {
                     const c = speakerColorMap[l.speaker] || DIALOGUE_SPEAKER_COLORS[0];
                     const hasTime = typeof l.time === 'number' && !isNaN(l.time);
+                    const pinyinText = getDialoguePinyin(l.text);
+                    const pinyinHiddenClass = appState.dialogueShowPinyin ? '' : 'hidden';
                     return `
                     <div class="flex flex-col gap-1 max-w-[85%] ${'self-start'}">
                         <span class="text-[11px] font-bold text-brand-500 px-1">${escapeHtml(l.speaker)}</span>
                         <div class="flex items-start gap-2">
-                            <div class="${c.bg} ${c.text} rounded-2xl rounded-tl-sm px-4 py-2.5 font-hanzi text-lg leading-snug shadow-sm">
-                                ${escapeHtml(l.text)}
+                            <div class="${c.bg} ${c.text} rounded-2xl rounded-tl-sm px-4 py-2.5 shadow-sm">
+                                ${pinyinText ? `<p class="dialogue-pinyin-line ${pinyinHiddenClass} text-xs sm:text-sm font-semibold text-brand-500/80 mb-0.5 tracking-wide">${escapeHtml(pinyinText)}</p>` : ''}
+                                <p class="font-hanzi text-lg leading-snug">${escapeHtml(l.text)}</p>
                             </div>
                             <button type="button" class="dialogue-speak-btn shrink-0 mt-1 w-8 h-8 rounded-full ${c.badge} text-white flex items-center justify-center shadow-sm hover:opacity-90 transition" data-text="${escapeHtml(l.text)}" data-line-index="${idx}" ${hasTime ? `data-time="${l.time}"` : ''} title="Nghe phát âm">
                                 <i class="fa-solid fa-volume-high text-xs"></i>
@@ -4243,6 +4291,8 @@
             // tên file "<Bài>_<Đoạn>.mp3" (vd: bài 4.1 => "4_1.mp3"), hiển thị trình phát để
             // nghe file ghi âm thật thay vì chỉ giọng đọc máy (TTS) ở từng câu.
             loadDialogueAudio(lesson, sub);
+
+            updateDialoguePinyinToggleBtn();
         }
 
         // Thử tải file ghi âm thật cho đoạn hội thoại hiện tại. Nếu không tìm thấy file,
@@ -4283,18 +4333,35 @@
                 if (typeof lineTimes[i] === 'number') { endTime = lineTimes[i]; break; }
             }
 
-            player.currentTime = startTime;
-            player.play();
+            function seekAndPlay() {
+                player.currentTime = startTime;
+                const playPromise = player.play();
+                if (playPromise && typeof playPromise.catch === 'function') playPromise.catch(() => {});
 
-            if (endTime !== null) {
-                _dialogueSegmentStopHandler = function () {
-                    if (player.currentTime >= endTime - 0.05) {
-                        player.pause();
-                        player.removeEventListener('timeupdate', _dialogueSegmentStopHandler);
-                        _dialogueSegmentStopHandler = null;
-                    }
+                if (endTime !== null) {
+                    _dialogueSegmentStopHandler = function () {
+                        if (player.currentTime >= endTime - 0.05) {
+                            player.pause();
+                            player.removeEventListener('timeupdate', _dialogueSegmentStopHandler);
+                            _dialogueSegmentStopHandler = null;
+                        }
+                    };
+                    player.addEventListener('timeupdate', _dialogueSegmentStopHandler);
+                }
+            }
+
+            // Trước khi có metadata (thời lượng file), việc set currentTime có thể bị trình
+            // duyệt bỏ qua âm thầm — nhất là ở lần bấm phát đầu tiên. Chờ 'loadedmetadata'
+            // rồi mới seek để đảm bảo luôn nhảy đúng vị trí, kể cả lần đầu tiên bấm.
+            if (player.readyState >= 1) {
+                seekAndPlay();
+            } else {
+                const onMeta = () => {
+                    player.removeEventListener('loadedmetadata', onMeta);
+                    seekAndPlay();
                 };
-                player.addEventListener('timeupdate', _dialogueSegmentStopHandler);
+                player.addEventListener('loadedmetadata', onMeta);
+                player.load();
             }
         }
 
@@ -4315,12 +4382,27 @@
         function setupDialogueEvents() {
             const btn = document.getElementById('dialogue-lesson-dropdown-btn');
             const panel = document.getElementById('dialogue-lesson-dropdown-panel');
-            if (!btn || !panel) return;
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                panel.classList.toggle('hidden');
-            });
-            document.addEventListener('click', () => panel.classList.add('hidden'));
+            if (btn && panel) {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    panel.classList.toggle('hidden');
+                });
+                document.addEventListener('click', () => panel.classList.add('hidden'));
+            }
+
+            // [HỘI THOẠI] Nút ẩn/hiện Pinyin — chỉ cần bật/tắt class "hidden" trên các dòng
+            // pinyin đã render sẵn, không cần vẽ lại toàn bộ khung chat.
+            const pinyinToggleBtn = document.getElementById('dialogue-pinyin-toggle-btn');
+            if (pinyinToggleBtn) {
+                pinyinToggleBtn.addEventListener('click', () => {
+                    appState.dialogueShowPinyin = !appState.dialogueShowPinyin;
+                    localStorage.setItem('zh_dialogue_show_pinyin', appState.dialogueShowPinyin ? '1' : '0');
+                    document.querySelectorAll('.dialogue-pinyin-line').forEach(el => {
+                        el.classList.toggle('hidden', !appState.dialogueShowPinyin);
+                    });
+                    updateDialoguePinyinToggleBtn();
+                });
+            }
         }
 
         window.onload = async function() {
