@@ -3143,6 +3143,23 @@
                 <p id="voice-select-empty-hint" class="hidden text-xs text-rose-500 mt-2">
                     Không tìm thấy giọng đọc tiếng Trung nào trên thiết bị này. Hãy vào Cài đặt hệ thống (Windows/macOS/Android/iOS) để tải thêm gói giọng đọc tiếng Trung, sau đó tải lại trang.
                 </p>
+
+                <!-- [iOS] Chỉ hiện khi phát hiện đang dùng iPhone/iPad VÀ chưa có giọng chất lượng
+                     cao (Enhanced/Premium) nào — xem showIOSVoiceTipIfNeeded(). Đây là nguyên nhân
+                     phổ biến nhất khiến app trên iPhone chỉ thấy 1 giọng "Tingting [Máy]" mặc định,
+                     vì Safari CHỈ liệt kê những giọng đã được TẢI SẴN trong Cài đặt hệ thống — trang
+                     web không thể tự tải giọng thay người dùng được. -->
+                <div id="ios-voice-tip" class="hidden mt-3 bg-amber-50 border border-amber-200 rounded-xl p-3.5 text-xs text-amber-900 leading-relaxed">
+                    <p class="font-bold mb-1.5 flex items-center gap-1.5"><i class="fa-brands fa-apple"></i> iPhone/iPad chỉ có 1 giọng đọc chuẩn (không tự nhiên)?</p>
+                    <p class="mb-2">Đây là do Safari trên iOS chỉ liệt kê những giọng bạn đã <b>tải sẵn trong Cài đặt máy</b> — trang web không tự tải giọng thay bạn được. Hãy tải giọng <b>Enhanced/Premium</b> (chất lượng cao, gần giống người thật) theo các bước sau, sau đó quay lại đây bấm "Xong" rồi mở lại app:</p>
+                    <ol class="list-decimal list-inside space-y-1">
+                        <li>Mở app <b>Cài đặt (Settings)</b> của iPhone/iPad</li>
+                        <li>Vào <b>Trợ năng (Accessibility)</b> → <b>Nội dung được đọc (Spoken Content)</b> → <b>Giọng nói (Voices)</b></li>
+                        <li>Chọn <b>Chinese (Mandarin - PRC)</b> / <b>Tiếng Trung</b></li>
+                        <li>Bấm tải (biểu tượng ☁️) bên cạnh giọng có ghi <b>"Enhanced"</b> hoặc <b>"Premium"</b> (ví dụ: Tingting Enhanced, Tingting Premium)</li>
+                        <li>Quay lại Safari, <b>tải lại trang web này</b>, mở lại mục Cài Đặt trong app và chọn đúng giọng "Enhanced/Premium" vừa tải</li>
+                    </ol>
+                </div>
             </div>
 
             </div>
@@ -3822,9 +3839,19 @@
             return all.find(v => v.name === savedName) || null;
         }
 
+        // Phát hiện thiết bị đang chạy Safari trên iPhone/iPad (kể cả iPadOS giả lập Mac trên
+        // Safari mới — nhận diện qua touch support), để hiển thị đúng hướng dẫn tải giọng Enhanced.
+        function isIOSDevice() {
+            const ua = navigator.userAgent || '';
+            const isAppleTouch = /iPad|iPhone|iPod/.test(ua);
+            const isMacTouch = /Macintosh/.test(ua) && navigator.maxTouchPoints > 1; // iPadOS 13+
+            return isAppleTouch || isMacTouch;
+        }
+
         function populateVoiceSelectDropdown() {
             const select = document.getElementById('setting-voice-select');
             const emptyHint = document.getElementById('voice-select-empty-hint');
+            const iosTip = document.getElementById('ios-voice-tip');
             if (!select) return;
             const voices = getMandarinVoices();
             const savedName = localStorage.getItem('zh_selected_voice_name') || '';
@@ -3839,6 +3866,11 @@
             select.value = voices.some(v => v.name === savedName) ? savedName : '';
 
             if (emptyHint) emptyHint.classList.toggle('hidden', voices.length > 0);
+
+            // Chỉ có giọng "thường" (không có giọng nào Enhanced/Premium/Natural...) trên iPhone/iPad
+            // => rất có thể người dùng chưa tải giọng chất lượng cao trong Cài đặt máy. Hiện hướng dẫn.
+            const hasNaturalVoice = voices.some(v => isNaturalVoiceName(v.name));
+            if (iosTip) iosTip.classList.toggle('hidden', !(isIOSDevice() && !hasNaturalVoice));
         }
 
         function pickVoiceByGender(gender) {
