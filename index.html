@@ -3755,6 +3755,13 @@
         const MALE_VOICE_HINTS = ['male', 'kangkang', 'yunyang', 'yunxi', 'yunjian', 'yunfeng', 'li-mu', 'limu', 'yang', 'gang'];
         const FEMALE_VOICE_HINTS = ['female', 'huihui', 'yaoyao', 'xiaoxiao', 'xiaoyi', 'tingting', 'ting-ting', 'mei-jia', 'meijia', 'xiaoxuan'];
 
+        // Từ khoá nhận diện các giọng đọc "tự nhiên" (chất lượng cao, nghe giống người thật)
+        // mà nhiều trình duyệt/hệ điều hành có sẵn — ví dụ giọng Google (Chrome/Android),
+        // giọng Neural/Natural/Online của Microsoft Edge, giọng Siri nâng cao trên iOS/macOS...
+        // So với giọng "cài sẵn ngoại tuyến" mặc định (thường đọc khá robot/đều đều), các
+        // giọng này nghe tự nhiên hơn hẳn nên được ưu tiên chọn trước.
+        const NATURAL_VOICE_HINTS = ['google', 'neural', 'natural', 'online', 'premium', 'enhanced', 'siri', 'wavenet'];
+
         function getMandarinVoices() {
             if (!('speechSynthesis' in window)) return [];
             const voices = window.speechSynthesis.getVoices() || [];
@@ -3765,11 +3772,16 @@
                 if (lang.includes('hk') || lang.includes('yue') || name.includes('cantonese') || name.includes('hong kong')) return false;
                 return lang === 'zh-cn' || lang === 'zh' || lang.startsWith('zh-cn') || name.includes('普通话') || name.includes('mandarin') || name.includes('china');
             });
-            // Ưu tiên giọng đọc CÀI SẴN TRÊN MÁY (localService: true) lên trước.
-            // Lý do: nhiều giọng đọc "qua mạng" (network voice, ví dụ giọng Google trên Chrome)
-            // KHÔNG áp dụng thông số tốc độ đọc (utterance.rate) — khiến việc chỉnh
-            // tốc độ ở giao diện không có tác dụng dù code đã gán rate đúng.
-            return filtered.sort((a, b) => (b.localService === true) - (a.localService === true));
+            // Ưu tiên giọng đọc TỰ NHIÊN (Google/Neural/Natural/Online/Premium...) lên đầu danh
+            // sách vì nghe hay và giống người thật hơn nhiều so với giọng robot mặc định của máy.
+            // Trong số các giọng tự nhiên (hoặc trong số các giọng thường), giọng cài sẵn trên máy
+            // (localService: true) vẫn được ưu tiên hơn vì hoạt động ổn định hơn giọng qua mạng.
+            return filtered.sort((a, b) => {
+                const aNatural = NATURAL_VOICE_HINTS.some(h => (a.name || '').toLowerCase().includes(h));
+                const bNatural = NATURAL_VOICE_HINTS.some(h => (b.name || '').toLowerCase().includes(h));
+                if (aNatural !== bNatural) return aNatural ? -1 : 1;
+                return (b.localService === true) - (a.localService === true);
+            });
         }
 
         function pickVoiceByGender(gender) {
