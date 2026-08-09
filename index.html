@@ -3123,6 +3123,28 @@
                 </label>
             </div>
 
+            <div class="border-t border-brand-100 mt-4 pt-4 pb-4">
+                <h4 class="text-sm font-bold text-brand-900 mb-1 flex items-center gap-2">
+                    <i class="fa-solid fa-microphone-lines text-brand-500"></i>
+                    Giọng Đọc Phát Âm
+                </h4>
+                <p class="text-xs text-slate-500 mb-3">
+                    Chọn giọng đọc tiếng Trung có sẵn trên máy/trình duyệt của bạn. Các giọng có đánh dấu
+                    <span class="font-bold text-brand-600">⭐ Tự nhiên</span> thường nghe hay, giống người thật hơn
+                    (giọng Google, Neural, Natural, Online...). Danh sách này khác nhau tuỳ thiết bị/trình duyệt.
+                </p>
+                <select id="setting-voice-select" class="w-full bg-brand-50 border border-brand-200 text-brand-950 text-sm font-medium rounded-xl px-3.5 py-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none cursor-pointer">
+                    <option value="">Tự động chọn giọng tốt nhất</option>
+                </select>
+                <button type="button" id="btn-test-voice" class="mt-2.5 w-full flex items-center justify-center gap-2 px-3.5 py-2 bg-brand-500 hover:bg-brand-600 text-white text-sm font-bold rounded-xl transition">
+                    <i class="fa-solid fa-volume-high"></i>
+                    Nghe thử giọng này
+                </button>
+                <p id="voice-select-empty-hint" class="hidden text-xs text-rose-500 mt-2">
+                    Không tìm thấy giọng đọc tiếng Trung nào trên thiết bị này. Hãy vào Cài đặt hệ thống (Windows/macOS/Android/iOS) để tải thêm gói giọng đọc tiếng Trung, sau đó tải lại trang.
+                </p>
+            </div>
+
             </div>
 
             <div class="px-6 pb-6 pt-4 flex justify-end border-t border-brand-100 shrink-0">
@@ -3762,6 +3784,11 @@
         // giọng này nghe tự nhiên hơn hẳn nên được ưu tiên chọn trước.
         const NATURAL_VOICE_HINTS = ['google', 'neural', 'natural', 'online', 'premium', 'enhanced', 'siri', 'wavenet'];
 
+        function isNaturalVoiceName(name) {
+            const n = (name || '').toLowerCase();
+            return NATURAL_VOICE_HINTS.some(h => n.includes(h));
+        }
+
         function getMandarinVoices() {
             if (!('speechSynthesis' in window)) return [];
             const voices = window.speechSynthesis.getVoices() || [];
@@ -3777,11 +3804,41 @@
             // Trong số các giọng tự nhiên (hoặc trong số các giọng thường), giọng cài sẵn trên máy
             // (localService: true) vẫn được ưu tiên hơn vì hoạt động ổn định hơn giọng qua mạng.
             return filtered.sort((a, b) => {
-                const aNatural = NATURAL_VOICE_HINTS.some(h => (a.name || '').toLowerCase().includes(h));
-                const bNatural = NATURAL_VOICE_HINTS.some(h => (b.name || '').toLowerCase().includes(h));
+                const aNatural = isNaturalVoiceName(a.name);
+                const bNatural = isNaturalVoiceName(b.name);
                 if (aNatural !== bNatural) return aNatural ? -1 : 1;
                 return (b.localService === true) - (a.localService === true);
             });
+        }
+
+        // [GIỌNG ĐỌC] Cho phép người dùng tự chọn giọng đọc cụ thể (lưu theo tên giọng, vì
+        // voice object không thể lưu trực tiếp vào localStorage) — hữu ích khi máy có nhiều
+        // giọng nhưng bước tự động chọn không nhận đúng giọng tự nhiên nhất, hoặc người dùng
+        // muốn nghe thử để chọn giọng ưng ý nhất trên chính thiết bị của họ.
+        function getManuallySelectedVoice() {
+            const savedName = localStorage.getItem('zh_selected_voice_name');
+            if (!savedName) return null;
+            const all = window.speechSynthesis.getVoices() || [];
+            return all.find(v => v.name === savedName) || null;
+        }
+
+        function populateVoiceSelectDropdown() {
+            const select = document.getElementById('setting-voice-select');
+            const emptyHint = document.getElementById('voice-select-empty-hint');
+            if (!select) return;
+            const voices = getMandarinVoices();
+            const savedName = localStorage.getItem('zh_selected_voice_name') || '';
+
+            select.innerHTML = '<option value="">Tự động chọn giọng tốt nhất</option>' +
+                voices.map(v => {
+                    const tag = isNaturalVoiceName(v.name) ? '⭐ Tự nhiên — ' : '';
+                    const source = v.localService ? '[Máy]' : '[Mạng]';
+                    return `<option value="${escapeHtml(v.name)}">${tag}${escapeHtml(v.name)} ${source}</option>`;
+                }).join('');
+
+            select.value = voices.some(v => v.name === savedName) ? savedName : '';
+
+            if (emptyHint) emptyHint.classList.toggle('hidden', voices.length > 0);
         }
 
         function pickVoiceByGender(gender) {
@@ -3814,7 +3871,10 @@
                 const utterance = new SpeechSynthesisUtterance(text);
                 utterance.lang = 'zh-CN';
 
-                const voice = pickVoiceByGender(appState.voiceGender);
+                // Ưu tiên giọng người dùng đã TỰ CHỌN trong Cài đặt (nếu có và vẫn tồn tại
+                // trên máy); nếu không thì mới quay lại cơ chế tự động chọn theo giới tính.
+                const manualVoice = getManuallySelectedVoice();
+                const voice = manualVoice || pickVoiceByGender(appState.voiceGender);
                 if (voice) {
                     utterance.voice = voice;
                     utterance.lang = voice.lang;
@@ -4478,7 +4538,12 @@
 
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.getVoices();
-                window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+                window.speechSynthesis.onvoiceschanged = () => {
+                    window.speechSynthesis.getVoices();
+                    // Nếu Cài đặt đang mở lúc danh sách giọng tải xong (thường xảy ra ở lần đầu
+                    // mở trang trên Chrome), làm mới lại dropdown để hiện đủ danh sách giọng.
+                    populateVoiceSelectDropdown();
+                };
             }
 
             setupNavigationEvents();
@@ -6557,6 +6622,7 @@
                 Object.keys(statusRadioMap).forEach(inputId => {
                     document.getElementById(inputId).checked = (statusRadioMap[inputId] === appState.statusFilter);
                 });
+                populateVoiceSelectDropdown();
                 modal.classList.remove('hidden');
             });
             document.getElementById('btn-close-settings-modal').addEventListener('click', () => {
@@ -6585,6 +6651,32 @@
                 autoSpeakToggle.addEventListener('change', (e) => {
                     appState.autoSpeakNewWord = e.target.checked;
                     localStorage.setItem('zh_auto_speak_new_word', String(appState.autoSpeakNewWord));
+                });
+            }
+
+            // [GIỌNG ĐỌC] Người dùng tự chọn 1 giọng đọc cụ thể trong danh sách giọng có sẵn
+            // trên thiết bị, và có thể bấm "Nghe thử" để kiểm tra ngay trước khi lưu lựa chọn.
+            const voiceSelect = document.getElementById('setting-voice-select');
+            if (voiceSelect) {
+                voiceSelect.addEventListener('change', () => {
+                    if (voiceSelect.value) {
+                        localStorage.setItem('zh_selected_voice_name', voiceSelect.value);
+                    } else {
+                        localStorage.removeItem('zh_selected_voice_name');
+                    }
+                });
+            }
+            const testVoiceBtn = document.getElementById('btn-test-voice');
+            if (testVoiceBtn) {
+                testVoiceBtn.addEventListener('click', () => {
+                    // Lưu lựa chọn hiện tại trước khi phát thử, để speakHanzi() dùng đúng giọng
+                    // vừa chọn trên dropdown (kể cả khi người dùng chưa rời khỏi ô chọn).
+                    if (voiceSelect && voiceSelect.value) {
+                        localStorage.setItem('zh_selected_voice_name', voiceSelect.value);
+                    } else if (voiceSelect) {
+                        localStorage.removeItem('zh_selected_voice_name');
+                    }
+                    speakHanzi('你好，很高兴认识你！');
                 });
             }
         }
