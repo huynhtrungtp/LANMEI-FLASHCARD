@@ -174,30 +174,38 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 2px;
-            padding: 8px 2px 7px;
-            font-size: 10px;
+            gap: 4px;
+            padding: 10px 2px 9px;
+            min-height: 60px;
+            font-size: 12px;
             font-weight: 700;
             color: #64748b;
-            transition: color .15s ease;
+            transition: color .15s ease, transform .12s ease, background-color .15s ease;
             position: relative;
+            -webkit-tap-highlight-color: transparent;
+            border-radius: 12px 12px 0 0;
+        }
+        .bottom-tab-btn:active {
+            transform: scale(0.93);
+            background-color: rgba(2, 132, 199, 0.08);
         }
         .bottom-tab-btn i, .bottom-tab-btn .bottom-tab-emoji {
-            font-size: 19px;
+            font-size: 24px;
             line-height: 1;
         }
         .bottom-tab-btn span {
-            line-height: 1;
+            line-height: 1.15;
             white-space: nowrap;
         }
         .bottom-tab-btn.active {
             color: #0369a1;
+            background-color: rgba(2, 132, 199, 0.06);
         }
         .bottom-tab-btn.active::before {
             content: '';
             position: absolute;
             top: 0;
-            width: 28px;
+            width: 32px;
             height: 3px;
             border-radius: 0 0 4px 4px;
             background: #0284c7;
@@ -205,9 +213,14 @@
         /* Chừa khoảng trống phía dưới để nội dung không bị thanh nav che mất (chỉ trên mobile) */
         @media (max-width: 767px) {
             #app-main-content {
-                padding-bottom: 78px;
+                padding-bottom: 88px;
             }
             #mobile-bottom-nav { display: flex; }
+        }
+        /* Màn hình rất nhỏ (≤360px): chữ nhãn dễ vỡ dòng, thu nhỏ đôi chút nhưng vẫn to hơn bản gốc */
+        @media (max-width: 360px) {
+            .bottom-tab-btn { font-size: 10.5px; padding: 9px 1px 8px; }
+            .bottom-tab-btn i, .bottom-tab-btn .bottom-tab-emoji { font-size: 21px; }
         }
         @media (min-width: 768px) {
             #mobile-bottom-nav { display: none; }
