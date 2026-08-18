@@ -169,7 +169,7 @@
             /* Đẩy cả thanh nav lên cao hơn viền cong/vạch home-indicator của iPhone:
                cộng thêm 10px vào khoảng an toàn hệ thống (env safe-area) để icon/chữ
                không bao giờ bị bo góc màn hình hay vạch home che/khuất mất. */
-            padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
+            padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
         }
         .bottom-tab-btn {
             flex: 1 1 0;
@@ -217,7 +217,7 @@
         /* Chừa khoảng trống phía dưới để nội dung không bị thanh nav che mất (chỉ trên mobile) */
         @media (max-width: 767px) {
             #app-main-content {
-                padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+                padding-bottom: calc(92px + env(safe-area-inset-bottom, 0px));
             }
             #mobile-bottom-nav { display: flex; }
         }
