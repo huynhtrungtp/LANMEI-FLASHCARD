@@ -2236,6 +2236,7 @@
                             <button type="button" class="hsk-option w-full text-left px-3.5 py-2 text-sm text-brand-800 hover:bg-brand-50 transition rounded-lg" data-value="HSK4" data-label="HSK 4">HSK 4</button>
                             <button type="button" class="hsk-option w-full text-left px-3.5 py-2 text-sm text-brand-800 hover:bg-brand-50 transition rounded-lg" data-value="HSK5" data-label="HSK 5">HSK 5</button>
                             <button type="button" class="hsk-option w-full text-left px-3.5 py-2 text-sm text-brand-800 hover:bg-brand-50 transition rounded-lg" data-value="HSK6" data-label="HSK 6">HSK 6</button>
+                            <button type="button" class="hsk-option w-full text-left px-3.5 py-2 text-sm text-brand-800 hover:bg-brand-50 transition rounded-lg" data-value="HSK789" data-label="HSK 7-9">HSK 7-9</button>
                         </div>
                         <div class="border-t border-brand-100 my-1"></div>
                         <button type="button" id="gt-hsk-group-toggle" class="w-full flex items-center justify-between px-3.5 py-2 text-sm font-bold text-brand-900 hover:bg-brand-50 transition rounded-lg">
@@ -3274,7 +3275,7 @@
 
         // Danh sách các sheet (giáo trình/cấp độ) mà app sẽ tìm trong Tu vung.xlsx.
         // Tên sheet trong Excel phải khớp CHÍNH XÁC (không phân biệt hoa/thường) với các mã bên dưới.
-        const HSK_SHEET_NAMES = ['HSK1', 'HSK2', 'HSK3', 'HSK4', 'HSK5', 'HSK6',
+        const HSK_SHEET_NAMES = ['HSK1', 'HSK2', 'HSK3', 'HSK4', 'HSK5', 'HSK6', 'HSK789',
             'GT_HSK1', 'GT_HSK2', 'GT_HSK3', 'GT_HSK4', 'GT_HSK5', 'GT_HSK6'];
 
         // Chuẩn hóa tên sheet để so khớp linh hoạt: bỏ dấu cách, gạch dưới, gạch ngang, không phân biệt hoa/thường.
@@ -3287,7 +3288,7 @@
         // Mỗi sheet trong file = một giáo trình/cấp độ (VD: sheet "HSK1", sheet "GT_HSK1"...).
         // Cột trong mỗi sheet: STT | Hán tự | Pinyin | Hán Việt | Nghĩa | Ví dụ câu | Pinyin câu | Nghĩa câu | Bài (tùy chọn)
         async function loadVocabularyFromExcel() {
-            const res = await fetch(encodeURI('Tu vung.xlsx'));
+            const res = await fetch(encodeURI('Tu vung.xlsx') + '?v=' + Date.now(), { cache: 'no-store' });
             if (!res.ok) throw new Error('Không tìm thấy Tu vung.xlsx (HTTP ' + res.status + ')');
             const buf = await res.arrayBuffer();
             const workbook = XLSX.read(buf, { type: 'array' });
@@ -3348,7 +3349,7 @@
         // Kết quả: { 1: { 1: [ {speaker, text, time, meaningVi}, ... ], 2: [...], 3: [...] }, 2: {...}, ... }
         // ═══════════════════════════════════════════════════════════════
         async function loadDialogueFromExcel() {
-            const res = await fetch(encodeURI('HỘI_THOẠI.xlsx'));
+            const res = await fetch(encodeURI('HỘI_THOẠI.xlsx') + '?v=' + Date.now(), { cache: 'no-store' });
             if (!res.ok) throw new Error('Không tìm thấy HỘI_THOẠI.xlsx (HTTP ' + res.status + ')');
             const buf = await res.arrayBuffer();
             const workbook = XLSX.read(buf, { type: 'array' });
@@ -3443,6 +3444,14 @@
             return lessons;
         }
 
+        // Chuyển mã cấp độ (VD: "HSK789", "GT_HSK1") thành nhãn hiển thị đẹp cho người dùng.
+        function hskCodeToLabel(code) {
+            if (code === 'HSK789') return 'HSK 7-9';
+            if (String(code).startsWith('GT_HSK')) return 'GT HSK ' + code.replace('GT_HSK', '');
+            if (String(code).startsWith('HSK')) return 'HSK ' + code.replace('HSK', '');
+            return code;
+        }
+
         // Dựng lại danh sách các mục chọn trong "Sổ tay" (Từ vựng HSK / Giáo trình HSK 3.0)
         // dựa trên những giáo trình THỰC SỰ có dữ liệu sau khi tải Tu vung.xlsx —
         // sheet nào không có trong file Excel sẽ tự động hiện "Sắp có".
@@ -3461,8 +3470,9 @@
 
             const hskGroupSub = document.getElementById('hsk-group-sub');
             if (hskGroupSub) {
-                hskGroupSub.innerHTML = ['HSK1', 'HSK2', 'HSK3', 'HSK4', 'HSK5', 'HSK6']
-                    .map(code => optionHtml(code, code.replace('HSK', 'HSK ')))
+                const hskLabels = { HSK1: 'HSK 1', HSK2: 'HSK 2', HSK3: 'HSK 3', HSK4: 'HSK 4', HSK5: 'HSK 5', HSK6: 'HSK 6', HSK789: 'HSK 7-9' };
+                hskGroupSub.innerHTML = Object.keys(hskLabels)
+                    .map(code => optionHtml(code, hskLabels[code]))
                     .join('');
             }
 
@@ -3477,7 +3487,7 @@
             if (!availableLevels.has(appState.currentHsk) && availableLevels.size > 0) {
                 appState.currentHsk = [...availableLevels][0];
                 const label = document.getElementById('hsk-dropdown-label');
-                if (label) label.innerText = appState.currentHsk.replace('GT_HSK', 'GT HSK ').replace('HSK', 'HSK ');
+                if (label) label.innerText = hskCodeToLabel(appState.currentHsk);
             }
         }
 
@@ -4767,7 +4777,7 @@
             "每天学一点，进步一大步 — Mỗi ngày học một chút, tiến bộ một bước lớn 🚀",
         ];
 
-        const HSK_LEVELS = ['HSK1','HSK2','HSK3','HSK4','HSK5','HSK6'];
+        const HSK_LEVELS = ['HSK1','HSK2','HSK3','HSK4','HSK5','HSK6','HSK789'];
 
         // ==== Tiến Độ Học Tập: ngày / tuần / tháng / năm ====
 
