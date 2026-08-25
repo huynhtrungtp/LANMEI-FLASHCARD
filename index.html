@@ -2133,17 +2133,8 @@
                     </div>
                 </div>
 
-                <!-- Action Buttons: Excel Import, Add Word & Dictionary Modal -->
+                <!-- Action Buttons -->
                 <div class="flex items-center gap-2">
-                    <button id="btn-open-import-modal" class="p-2.5 text-xs sm:text-sm bg-accent-100 hover:bg-accent-200 text-accent-800 font-semibold rounded-xl border border-accent-300 transition flex items-center justify-center shadow-xs" title="Nhập danh sách từ từ file Excel">
-                        <i class="fa-solid fa-file-excel text-emerald-600"></i>
-                    </button>
-                    <button id="btn-open-add-modal" class="px-3.5 py-2 text-xs sm:text-sm bg-brand-500 hover:bg-brand-600 text-white font-semibold rounded-xl shadow-md shadow-brand-500/20 transition flex items-center gap-2" title="Thêm Từ Mới">
-                        <i class="fa-solid fa-plus"></i>
-                    </button>
-                    <button id="btn-open-settings-modal" class="p-2.5 bg-brand-50 hover:bg-brand-100 text-brand-700 rounded-xl border border-brand-200 transition" title="Cài đặt hiển thị Thẻ nhớ">
-                        <i class="fa-solid fa-gear"></i>
-                    </button>
                 </div>
             </div>
         </div>
@@ -2503,6 +2494,9 @@
                         </button>
                         <button id="btn-goto-writing" title="Rèn viết chữ này" class="w-7 h-7 flex items-center justify-center rounded-full bg-brand-50 hover:bg-brand-100 border border-brand-200 text-brand-600 transition text-sm">
                             📝
+                        </button>
+                        <button id="btn-open-settings-modal" class="w-7 h-7 flex items-center justify-center rounded-full bg-brand-50 hover:bg-brand-100 border border-brand-200 text-brand-600 transition" title="Cài đặt hiển thị Thẻ nhớ">
+                            <i class="fa-solid fa-gear text-xs"></i>
                         </button>
                     </div>
                 </div>
@@ -6860,7 +6854,7 @@
 
         function setupModalEvents() {
             const addModal = document.getElementById('add-word-modal');
-            document.getElementById('btn-open-add-modal').addEventListener('click', () => {
+            document.getElementById('btn-open-add-modal')?.addEventListener('click', () => {
                 addModal.classList.remove('hidden');
             });
             document.getElementById('btn-close-modal').addEventListener('click', () => {
@@ -6894,7 +6888,7 @@
             });
 
             const importModal = document.getElementById('import-excel-modal');
-            document.getElementById('btn-open-import-modal').addEventListener('click', () => {
+            document.getElementById('btn-open-import-modal')?.addEventListener('click', () => {
                 importModal.classList.remove('hidden');
             });
             document.getElementById('btn-close-import-modal').addEventListener('click', () => {
