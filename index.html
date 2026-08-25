@@ -3629,7 +3629,15 @@
                 const saved = JSON.parse(localStorage.getItem('zh_wrong_today') || '{}');
                 const today = new Date().toDateString();
                 return (saved.date === today && Array.isArray(saved.words)) ? saved.words : [];
-            })()
+            })(),
+
+            // [ĐIỂM TÍCH LŨY] Lịch sử các câu/từ đã từng làm ĐÚNG ít nhất 1 lần, dùng để nhận
+            // biết "bài tập lặp lại" (gặp lại câu/từ đã làm đúng trước đó) — lưu vĩnh viễn,
+            // không reset theo ngày. Key dạng "loạiBài:địnhDanh" -> true.
+            correctItemsHistory: JSON.parse(localStorage.getItem('zh_correct_items_history') || '{}'),
+
+            // [THẺ NHỚ] Đếm số lần lướt thẻ nhớ, cứ đủ 10 lần thì +1 điểm rồi reset về 0
+            flashcardSwipeCount: parseInt(localStorage.getItem('zh_flashcard_swipe_count') || '0')
         };
 
         // ═══════════════════════════════════════════════════════════════
@@ -3737,6 +3745,47 @@
             localStorage.setItem('zh_score_history', JSON.stringify(appState.scoreHistory));
 
             updateSharedScoreDisplay();
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // [QUI TẮC CỘNG ĐIỂM - BÀI TẬP LẶP LẠI]
+        // Một câu/từ được coi là "lặp lại" nếu trước đó đã từng làm ĐÚNG ít
+        // nhất 1 lần (bất kể ở phiên nào, ngày nào). Lần đầu làm đúng: +1
+        // điểm. Những lần làm đúng SAU đó (lặp lại) chỉ được +0.5 điểm.
+        // Làm sai luôn bị trừ 1 điểm, kể cả khi đó là câu/từ lặp lại.
+        // ═══════════════════════════════════════════════════════════════
+        function isRepeatCorrectItem(type, key) {
+            return !!appState.correctItemsHistory[`${type}:${key}`];
+        }
+
+        function markCorrectItem(type, key) {
+            appState.correctItemsHistory[`${type}:${key}`] = true;
+            localStorage.setItem('zh_correct_items_history', JSON.stringify(appState.correctItemsHistory));
+        }
+
+        // Tính điểm cộng khi làm ĐÚNG 1 câu/từ thuộc bài tập `type`, định danh bằng `key`.
+        // Tự động ghi nhận vào lịch sử để lần sau nhận biết là "lặp lại".
+        // Trả về số điểm đã cộng (1 hoặc 0.5) để hiển thị lên UI nếu cần.
+        function awardCorrectScore(type, key) {
+            const isRepeat = isRepeatCorrectItem(type, key);
+            const gained = isRepeat ? 0.5 : 1;
+            addSharedScore(gained);
+            markCorrectItem(type, key);
+            return gained;
+        }
+
+        // [THẺ NHỚ] Gọi mỗi khi người dùng lướt sang 1 thẻ khác (vuốt/next/prev).
+        // Cứ đủ 10 lần lướt thì +1 điểm và reset bộ đếm về 0.
+        function incrementFlashcardSwipe() {
+            appState.flashcardSwipeCount++;
+            if (appState.flashcardSwipeCount >= 10) {
+                appState.flashcardSwipeCount = 0;
+                addSharedScore(1);
+                if (typeof showToast === 'function') {
+                    showToast('Lướt đủ 10 thẻ nhớ • +1 điểm 🎉', 'success');
+                }
+            }
+            localStorage.setItem('zh_flashcard_swipe_count', appState.flashcardSwipeCount);
         }
 
         function updateSharedScoreDisplay() {
@@ -5424,6 +5473,7 @@
                     appState.isCardFlipped = false;
                     document.getElementById('flashcard-inner').classList.remove('rotate-y-180');
                     renderFlashcard();
+                    incrementFlashcardSwipe();
                 }
             });
 
@@ -5434,6 +5484,7 @@
                     appState.isCardFlipped = false;
                     document.getElementById('flashcard-inner').classList.remove('rotate-y-180');
                     renderFlashcard();
+                    incrementFlashcardSwipe();
                 }
             });
 
@@ -5586,6 +5637,7 @@
                     document.getElementById('flashcard-inner').classList.remove('rotate-y-180');
                 }
                 renderFlashcard();
+                incrementFlashcardSwipe();
             }
 
             document.getElementById('btn-mark-mastered').addEventListener('click', () => {
@@ -6011,9 +6063,10 @@
             document.getElementById('soNext').classList.remove('hidden');
 
             if (isCorrect) {
+                const soKey = sentence.tokens.join('');
+                const soGained = awardCorrectScore('sentence-order', soKey);
                 feedback.className = "w-full p-3.5 rounded-xl font-bold text-sm text-center bg-emerald-100 text-emerald-900 border border-emerald-300";
-                feedback.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 mr-2"></i> Chính xác! (${sentence.pinyin}) — +2 điểm`;
-                addSharedScore(2);
+                feedback.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 mr-2"></i> Chính xác! (${sentence.pinyin}) — +${soGained} điểm`;
                 if (appState.soTotal % 5 === 0) {
                     confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } });
                 }
@@ -6119,12 +6172,11 @@
 
             if (selectedMeaning === correctMeaning) {
                 btnEl.className = "p-4 rounded-2xl border-2 border-emerald-500 bg-emerald-100 text-emerald-950 font-bold text-base shadow-sm flex items-center justify-between";
+                const listeningGained = awardCorrectScore('listening', targetWord.hanzi);
                 const okIcon = btnEl.querySelector('i');
-                if (okIcon) okIcon.outerHTML = '<span class="text-emerald-600 font-bold text-sm">+2</span>';
+                if (okIcon) okIcon.outerHTML = `<span class="text-emerald-600 font-bold text-sm">+${listeningGained}</span>`;
 
                 feedback.classList.add('hidden');
-
-                addSharedScore(2);
 
                 if (appState.listeningTotal % 5 === 0) {
                     confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } });
@@ -6234,10 +6286,9 @@
 
             if (userAnswer === correctAnswer) {
                 input.className = "w-full text-center text-2xl font-hanzi font-bold border-2 border-emerald-500 bg-emerald-50 text-emerald-900 focus:outline-none rounded-2xl px-4 py-3 transition placeholder:text-sm placeholder:font-sans placeholder:font-normal placeholder:text-slate-400";
+                const translateGained = awardCorrectScore('translate', targetWord.hanzi);
                 feedback.className = "w-full p-3.5 rounded-xl font-bold text-sm transition text-center bg-emerald-100 text-emerald-800";
-                feedback.innerHTML = `+1 điểm &nbsp;•&nbsp; ${targetWord.hanzi} (${targetWord.pinyin})`;
-
-                addSharedScore(1);
+                feedback.innerHTML = `+${translateGained} điểm &nbsp;•&nbsp; ${targetWord.hanzi} (${targetWord.pinyin})`;
 
                 if (appState.translateTotal % 5 === 0) {
                     confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } });
@@ -6400,12 +6451,11 @@
 
             if (selectedMeaning === correctMeaning) {
                 btnEl.className = "p-4 rounded-2xl border-2 border-emerald-500 bg-emerald-100 text-emerald-950 font-bold text-base shadow-sm flex items-center justify-between";
+                const quizGained = awardCorrectScore('quiz', appState.currentQuizQuestion ? appState.currentQuizQuestion.hanzi : correctMeaning);
                 const okIcon = btnEl.querySelector('i');
-                if (okIcon) okIcon.outerHTML = '<span class="text-emerald-600 font-bold text-sm">+2</span>';
+                if (okIcon) okIcon.outerHTML = `<span class="text-emerald-600 font-bold text-sm">+${quizGained}</span>`;
 
                 feedback.classList.add('hidden');
-
-                addSharedScore(2);
             } else {
                 btnEl.className = "p-4 rounded-2xl border-2 border-rose-400 bg-rose-100 text-rose-950 font-bold text-base shadow-sm flex items-center justify-between";
 
