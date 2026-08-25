@@ -6596,22 +6596,44 @@
             });
         }
 
+        // [Tối ưu hiệu năng] Vẫn tìm kiếm/lọc trên TOÀN BỘ appState.vocabulary như cũ (để
+        // tính năng nhảy từ "mẫu câu ngữ pháp" ở Trang chủ qua Tra Từ luôn tìm ra từ, bất kể
+        // từ đó thuộc HSK nào). Điểm khác: KHÔNG vẽ hết 10.000+ dòng <tr> cùng lúc nữa —
+        // chỉ vẽ từng đợt (PAGE_SIZE dòng), người dùng cuộn tới cuối bảng sẽ tự động tải
+        // thêm đợt tiếp theo (infinite scroll), giống Facebook/Shopee. Nhờ vậy DOM luôn nhẹ,
+        // không bị giật dù dữ liệu gốc rất lớn.
+        const DICT_PAGE_SIZE = 200;
+        let dictRenderedCount = 0;
+        let dictCurrentFiltered = [];
+        let dictScrollHandlerAttached = false;
+
         function renderDictionary(searchTerm = '') {
             const tbody = document.getElementById('dict-table-body');
             tbody.innerHTML = '';
 
             const term = searchTerm.toLowerCase().trim();
-            const filtered = appState.vocabulary.filter(item => {
+            dictCurrentFiltered = appState.vocabulary.filter(item => {
                 return item.hanzi.includes(term) ||
                        item.pinyin.toLowerCase().includes(term) ||
                        (item.hanViet || '').toLowerCase().includes(term) ||
                        item.meaning.toLowerCase().includes(term);
             });
+            dictRenderedCount = 0;
 
-            document.getElementById('dict-count-badge').innerText = `Tổng: ${filtered.length} từ`;
+            document.getElementById('dict-count-badge').innerText = `Tổng: ${dictCurrentFiltered.length} từ`;
+
+            dictAppendNextPage();
+            dictSetupInfiniteScroll();
+        }
+
+        // Vẽ thêm 1 đợt (PAGE_SIZE dòng) tiếp theo vào cuối bảng.
+        function dictAppendNextPage() {
+            const tbody = document.getElementById('dict-table-body');
+            const nextChunk = dictCurrentFiltered.slice(dictRenderedCount, dictRenderedCount + DICT_PAGE_SIZE);
+            if (nextChunk.length === 0) return;
 
             const frag = document.createDocumentFragment();
-            filtered.forEach(item => {
+            nextChunk.forEach(item => {
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-brand-50/60 transition";
                 tr.innerHTML = `
@@ -6628,6 +6650,25 @@
                 frag.appendChild(tr);
             });
             tbody.appendChild(frag);
+            dictRenderedCount += nextChunk.length;
+        }
+
+        // Lắng nghe cuộn trang: khi người dùng gần chạm đáy, tự tải thêm 1 đợt.
+        // Chỉ gắn listener 1 lần duy nhất (tránh gắn trùng mỗi lần renderDictionary chạy lại).
+        function dictSetupInfiniteScroll() {
+            if (dictScrollHandlerAttached) return;
+            dictScrollHandlerAttached = true;
+            window.addEventListener('scroll', () => {
+                const dictSection = document.getElementById('mode-dictionary');
+                if (!dictSection || dictSection.classList.contains('hidden')) return;
+                if (dictRenderedCount >= dictCurrentFiltered.length) return;
+
+                const scrollBottom = window.innerHeight + window.scrollY;
+                const pageHeight = document.documentElement.scrollHeight;
+                if (scrollBottom >= pageHeight - 400) {
+                    dictAppendNextPage();
+                }
+            }, { passive: true });
         }
 
         window.toggleFavoriteDict = function(id) {
