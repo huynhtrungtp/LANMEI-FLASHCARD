@@ -3099,6 +3099,17 @@
                         <input type="radio" name="setting-status-filter" id="setting-status-mastered" value="MASTERED" class="w-5 h-5 accent-emerald-600 cursor-pointer">
                     </label>
                 </div>
+
+                <label class="flex items-center justify-between px-3.5 py-2.5 mt-2.5 bg-brand-50 border border-brand-200 rounded-xl cursor-pointer">
+                    <span class="flex items-start gap-2">
+                        <i class="fa-solid fa-shuffle text-brand-500 mt-0.5"></i>
+                        <span>
+                            <span class="text-sm font-bold text-brand-900 block">Hiển Thị Từ Vựng Ngẫu Nhiên</span>
+                            <span class="text-xs text-slate-500">Xáo trộn thứ tự thẻ nhớ thay vì hiển thị tuần tự</span>
+                        </span>
+                    </span>
+                    <input type="checkbox" id="setting-random-order" class="w-5 h-5 accent-brand-500 cursor-pointer shrink-0 ml-2">
+                </label>
             </div>
 
             <div class="border-t border-brand-100 mt-4 pt-4 pb-4">
@@ -3517,6 +3528,7 @@
 
         let appState = {
             vocabulary: [],
+            randomOrder: localStorage.getItem('zh_random_order') === 'true',
             favorites: JSON.parse(localStorage.getItem('zh_favs') || '[]'),
             mastered: JSON.parse(localStorage.getItem('zh_mastered') || '[]'),
             unlearned: JSON.parse(localStorage.getItem('zh_unlearned') || '[]'),
@@ -5427,10 +5439,23 @@
                 showToast("Không có từ nào trong bộ lọc này", "error");
             }
 
+            if (appState.randomOrder && appState.filteredVocab.length > 1) {
+                shuffleArrayInPlace(appState.filteredVocab);
+            }
+
             appState.cardIndex = 0;
             appState.isCardFlipped = false;
 
             switchMode(appState.activeMode);
+        }
+
+        // Xáo trộn mảng tại chỗ (Fisher-Yates), dùng cho chế độ "Từ vựng ngẫu nhiên".
+        function shuffleArrayInPlace(arr) {
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
         }
 
         function updateStatsUI() {
@@ -6802,6 +6827,17 @@
             document.getElementById('btn-done-settings-modal').addEventListener('click', () => {
                 modal.classList.add('hidden');
             });
+
+            // [NGẪU NHIÊN] Bật/tắt hiển thị từ vựng theo thứ tự ngẫu nhiên trên Thẻ Nhớ
+            const randomOrderToggle = document.getElementById('setting-random-order');
+            if (randomOrderToggle) {
+                randomOrderToggle.checked = appState.randomOrder;
+                randomOrderToggle.addEventListener('change', (e) => {
+                    appState.randomOrder = e.target.checked;
+                    localStorage.setItem('zh_random_order', String(appState.randomOrder));
+                    applyFilter();
+                });
+            }
 
             // Sync auto-play speed select with saved state on load
             const speedSelect = document.getElementById('setting-auto-play-speed');
