@@ -6596,21 +6596,36 @@
             });
         }
 
+        // [Tối ưu hiệu năng] Trước đây hàm này luôn lọc trên TOÀN BỘ appState.vocabulary
+        // (có thể lên tới 10.000+ từ khi gộp hết HSK1-6 + HSK789), khiến lần đầu mở
+        // "Tra Từ" phải build và render hàng chục nghìn hàng <tr> cùng lúc -> rất lag,
+        // đặc biệt trên điện thoại. Giờ đổi sang dùng appState.filteredVocab: đây chính
+        // là bộ từ đã được lọc theo "Sổ tay" (cấp độ HSK) + "Bài" đang chọn — CÙNG một
+        // lựa chọn với bên Thẻ Nhớ, nên khi đổi cấp độ/bài ở đầu trang, "Tra Từ" cũng
+        // tự cập nhật theo (đã có applyFilter() -> switchMode() gọi lại renderDictionary()).
         function renderDictionary(searchTerm = '') {
             const tbody = document.getElementById('dict-table-body');
             tbody.innerHTML = '';
 
             const term = searchTerm.toLowerCase().trim();
-            const filtered = appState.vocabulary.filter(item => {
-                return item.hanzi.includes(term) ||
-                       item.pinyin.toLowerCase().includes(term) ||
-                       (item.hanViet || '').toLowerCase().includes(term) ||
-                       item.meaning.toLowerCase().includes(term);
-            });
+            const baseList = appState.filteredVocab;
+            const filtered = term
+                ? baseList.filter(item => {
+                    return item.hanzi.includes(term) ||
+                           item.pinyin.toLowerCase().includes(term) ||
+                           (item.hanViet || '').toLowerCase().includes(term) ||
+                           item.meaning.toLowerCase().includes(term);
+                })
+                : baseList;
 
             document.getElementById('dict-count-badge').innerText = `Tổng: ${filtered.length} từ`;
 
-            filtered.forEach(item => {
+            // Giới hạn số hàng render cùng lúc để tránh giật khi 1 bài/cấp độ vẫn còn nhiều từ.
+            const RENDER_LIMIT = 300;
+            const toRender = filtered.slice(0, RENDER_LIMIT);
+
+            const frag = document.createDocumentFragment();
+            toRender.forEach(item => {
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-brand-50/60 transition";
                 tr.innerHTML = `
@@ -6624,8 +6639,17 @@
                         </button>
                     </td>
                 `;
-                tbody.appendChild(tr);
+                frag.appendChild(tr);
             });
+            tbody.appendChild(frag);
+
+            if (filtered.length > RENDER_LIMIT) {
+                const trMore = document.createElement('tr');
+                trMore.innerHTML = `<td colspan="5" class="p-4 text-center text-xs text-slate-400">
+                    Đang hiện ${RENDER_LIMIT}/${filtered.length} từ. Hãy gõ tìm kiếm hoặc chọn "Bài" cụ thể ở trên để thu hẹp danh sách.
+                </td>`;
+                tbody.appendChild(trMore);
+            }
         }
 
         window.toggleFavoriteDict = function(id) {
