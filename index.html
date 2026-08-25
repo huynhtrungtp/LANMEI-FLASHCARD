@@ -2913,6 +2913,7 @@
                                     <th class="p-4">Pinyin</th>
                                     <th class="p-4">Hán Việt</th>
                                     <th class="p-4">Nghĩa</th>
+                                    <th class="p-4 text-center">Luyện Viết</th>
                                     <th class="p-4 text-center">Phát Âm</th>
                                 </tr>
                             </thead>
@@ -5770,6 +5771,12 @@
             }
         }
 
+        // Mở modal luyện viết nét chữ từ bảng Tra Từ (tái dùng chung modal với Thẻ Nhớ).
+        function openDictWriting(hanzi, pinyin) {
+            stopAutoPlay();
+            openQuickWriting({ hanzi, pinyin });
+        }
+
         function openQuickWriting(word) {
             const chars = (word.hanzi || '').split('').filter(c => c.trim());
             if (chars.length === 0) return;
@@ -6641,6 +6648,11 @@
                     <td class="p-4 text-brand-700 font-semibold">${item.pinyin}</td>
                     <td class="p-4 text-slate-600">${item.hanViet || ''}</td>
                     <td class="p-4 font-bold text-brand-950">${item.meaning}</td>
+                    <td class="p-4 text-center">
+                        <button onclick="openDictWriting('${escapeHtml(item.hanzi)}', '${escapeHtml(item.pinyin)}')" class="p-2 rounded-xl bg-teal-50 hover:bg-teal-100 text-teal-600 transition" title="Luyện viết nét chữ">
+                            <i class="fa-solid fa-pen-nib"></i>
+                        </button>
+                    </td>
                     <td class="p-4 text-center">
                         <button onclick="speakHanzi('${item.hanzi}')" class="p-2 rounded-xl bg-brand-50 hover:bg-brand-100 text-brand-600 transition" title="Nghe phát âm">
                             <i class="fa-solid fa-volume-high"></i>
