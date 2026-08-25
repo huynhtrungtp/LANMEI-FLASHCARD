@@ -2498,7 +2498,6 @@
                         </button>
                     </div>
                     <div class="flex items-center gap-2">
-                        <span id="card-srs-badge" class="text-[10px] font-bold px-2 py-1 rounded-full bg-brand-50 border border-brand-200 text-brand-600 whitespace-nowrap" title="Lịch ôn lại tự động (SRS)">Từ mới</span>
                         <button id="btn-auto-play" title="Tự động chuyển thẻ" class="w-7 h-7 flex items-center justify-center rounded-full bg-brand-50 hover:bg-brand-100 border border-brand-200 text-brand-600 transition">
                             <i id="btn-auto-play-icon" class="fa-solid fa-play text-xs"></i>
                         </button>
@@ -5760,19 +5759,6 @@
             if (!word) return;
 
             document.getElementById('card-seq-badge').innerText = `${appState.cardIndex + 1}/${appState.filteredVocab.length}`;
-
-            // [SRS] Cập nhật badge lịch ôn lại tự động cho từ đang hiển thị
-            const srsBadge = document.getElementById('card-srs-badge');
-            if (srsBadge) {
-                srsBadge.innerText = srsDueLabel(word.id);
-                const isDueNow = srsIsDue(word.id);
-                srsBadge.classList.toggle('bg-amber-50', isDueNow);
-                srsBadge.classList.toggle('border-amber-300', isDueNow);
-                srsBadge.classList.toggle('text-amber-700', isDueNow);
-                srsBadge.classList.toggle('bg-brand-50', !isDueNow);
-                srsBadge.classList.toggle('border-brand-200', !isDueNow);
-                srsBadge.classList.toggle('text-brand-600', !isDueNow);
-            }
 
             document.getElementById('card-hanzi').innerText = word.hanzi;
             document.getElementById('card-pinyin').innerText = word.pinyin;
