@@ -3605,6 +3605,9 @@
                 return saved.date === today ? (saved.score || 0) : 0;
             })(),
             totalScore: parseInt(localStorage.getItem('zh_score_total') || '0'),
+            // Ngày (YYYY-MM-DD) gần nhất đã được cộng +5 điểm thưởng chuỗi ngày học liên tục,
+            // dùng để đảm bảo mỗi ngày chỉ thưởng 1 lần duy nhất
+            streakBonusDate: localStorage.getItem('zh_streak_bonus_date') || '',
 
             // Lịch sử điểm học theo từng ngày { 'YYYY-MM-DD': tổng điểm ngày đó }, dùng để
             // vẽ biểu đồ Tiến Độ Học Tập (theo ngày/tuần/tháng/năm) và tính streak ngày liên tục
@@ -3745,6 +3748,32 @@
             localStorage.setItem('zh_score_history', JSON.stringify(appState.scoreHistory));
 
             updateSharedScoreDisplay();
+
+            // Chỉ kiểm tra thưởng chuỗi khi vừa CỘNG điểm (delta dương), không xét khi bị trừ điểm
+            if (delta > 0) checkAndAwardStreakBonus();
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // [ĐIỂM THƯỞNG CHUỖI NGÀY HỌC LIÊN TỤC]
+        // Học liên tục đủ 5 ngày -> +5 điểm thưởng. Từ ngày thứ 6, 7, 8...
+        // trở đi, HỄ vẫn còn giữ chuỗi liên tục (không bỏ ngày nào) thì MỖI
+        // NGÀY đều được +5 điểm (mỗi ngày chỉ thưởng đúng 1 lần). Nếu ngắt
+        // chuỗi (có 1 ngày không học), phải học liên tục lại từ đầu, đủ 5
+        // ngày mới lại được thưởng +5.
+        // ═══════════════════════════════════════════════════════════════
+        function checkAndAwardStreakBonus() {
+            const todayKey = getDateKey(new Date());
+            if (appState.streakBonusDate === todayKey) return; // hôm nay đã thưởng rồi
+
+            const streak = computeStreak(); // đã bao gồm hôm nay vì scoreHistory[todayKey] vừa được cập nhật > 0
+            if (streak >= 5) {
+                appState.streakBonusDate = todayKey;
+                localStorage.setItem('zh_streak_bonus_date', todayKey);
+                addSharedScore(5);
+                if (typeof showToast === 'function') {
+                    showToast(`🔥 Chuỗi ${streak} ngày học liên tục! +5 điểm thưởng`, 'success');
+                }
+            }
         }
 
         // ═══════════════════════════════════════════════════════════════
