@@ -4615,26 +4615,36 @@
                 });
             });
 
-            // [HỘI THOẠI] Nếu có file ghi âm thật đặt trong thư mục con "audio hsk1" (cùng
-            // cấp với index.html) theo quy ước tên file "<Bài>_<Đoạn>.mp3"
-            // (vd: bài 4.1 => "audio hsk1/4_1.mp3"), hiển thị trình phát để nghe file ghi âm
-            // thật thay vì chỉ giọng đọc máy (TTS) ở từng câu.
-            loadDialogueAudio(lesson, sub);
+            // [HỘI THOẠI] Nếu có file ghi âm thật đặt trong thư mục con "audio hsk1" /
+            // "audio hsk2" / "audio hsk3" (cùng cấp với index.html, chọn theo đúng cấp độ
+            // đang xem) theo quy ước tên file "<Bài>_<Đoạn>.mp3"
+            // (vd: HSK1 bài 4.1 => "audio hsk1/4_1.mp3", HSK2 bài 4.1 => "audio hsk2/4_1.mp3"),
+            // hiển thị trình phát để nghe file ghi âm thật thay vì chỉ giọng đọc máy (TTS) ở
+            // từng câu.
+            loadDialogueAudio(appState.dialogueHsk, lesson, sub);
 
             updateDialoguePinyinToggleBtn();
             updateDialogueMeaningToggleBtn();
         }
 
+        // Ánh xạ mã HSK (HSK1/HSK2/HSK3) sang tên thư mục chứa file mp3 tương ứng.
+        // Muốn thêm audio cho HSK4 trở lên, chỉ cần thêm dòng tương ứng vào đây.
+        const DIALOGUE_AUDIO_FOLDER_MAP = { HSK1: 'audio hsk1', HSK2: 'audio hsk2', HSK3: 'audio hsk3' };
+
         // Thử tải file ghi âm thật cho đoạn hội thoại hiện tại. Nếu không tìm thấy file,
         // ẩn trình phát đi và người dùng vẫn dùng được nút 🔊 (TTS) ở từng câu như cũ.
-        function loadDialogueAudio(lesson, sub) {
+        function loadDialogueAudio(hskCode, lesson, sub) {
             const wrapper = document.getElementById('dialogue-audio-wrapper');
             const player = document.getElementById('dialogue-audio-player');
             if (!wrapper || !player) return;
-            const src = encodeURI(`audio hsk1/${lesson}_${sub}.mp3`);
+            const folder = DIALOGUE_AUDIO_FOLDER_MAP[hskCode];
 
             wrapper.classList.add('hidden');
             player.removeAttribute('src');
+
+            if (!folder) return; // Chưa khai báo thư mục audio cho cấp HSK này
+
+            const src = encodeURI(`${folder}/${lesson}_${sub}.mp3`);
 
             fetch(src, { method: 'HEAD' }).then(res => {
                 if (!res.ok) throw new Error('not found');
