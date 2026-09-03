@@ -4615,9 +4615,10 @@
                 });
             });
 
-            // [HỘI THOẠI] Nếu có file ghi âm thật đặt cùng thư mục index.html theo quy ước
-            // tên file "<Bài>_<Đoạn>.mp3" (vd: bài 4.1 => "4_1.mp3"), hiển thị trình phát để
-            // nghe file ghi âm thật thay vì chỉ giọng đọc máy (TTS) ở từng câu.
+            // [HỘI THOẠI] Nếu có file ghi âm thật đặt trong thư mục con "audio hsk1" (cùng
+            // cấp với index.html) theo quy ước tên file "<Bài>_<Đoạn>.mp3"
+            // (vd: bài 4.1 => "audio hsk1/4_1.mp3"), hiển thị trình phát để nghe file ghi âm
+            // thật thay vì chỉ giọng đọc máy (TTS) ở từng câu.
             loadDialogueAudio(lesson, sub);
 
             updateDialoguePinyinToggleBtn();
@@ -4630,7 +4631,7 @@
             const wrapper = document.getElementById('dialogue-audio-wrapper');
             const player = document.getElementById('dialogue-audio-player');
             if (!wrapper || !player) return;
-            const src = encodeURI(`${lesson}_${sub}.mp3`);
+            const src = encodeURI(`audio hsk1/${lesson}_${sub}.mp3`);
 
             wrapper.classList.add('hidden');
             player.removeAttribute('src');
