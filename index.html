@@ -2925,13 +2925,24 @@
                     <h2 class="font-extrabold text-brand-800 text-xl sm:text-2xl flex items-center gap-2">
                         <span>💬</span> Hội Thoại
                     </h2>
-                    <div class="relative" id="dialogue-lesson-dropdown-wrapper">
-                        <button type="button" id="dialogue-lesson-dropdown-btn" class="bg-brand-50 border border-brand-200 text-brand-950 text-sm font-medium rounded-xl px-3.5 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none cursor-pointer min-w-[110px] flex items-center justify-between gap-2">
-                            <span id="dialogue-lesson-dropdown-label">Bài 1</span>
-                            <i class="fa-solid fa-chevron-down text-xs text-brand-400"></i>
-                        </button>
-                        <div id="dialogue-lesson-dropdown-panel" class="hidden absolute right-0 z-30 mt-1.5 w-40 bg-white border border-brand-200 rounded-xl shadow-lg py-1.5 max-h-80 overflow-y-auto">
-                            <!-- Danh sách bài được dựng động bằng JS, xem renderDialogueLessonDropdown() -->
+                    <div class="flex items-center gap-2">
+                        <div class="relative" id="dialogue-hsk-dropdown-wrapper">
+                            <button type="button" id="dialogue-hsk-dropdown-btn" class="bg-brand-50 border border-brand-200 text-brand-950 text-sm font-medium rounded-xl px-3.5 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none cursor-pointer min-w-[90px] flex items-center justify-between gap-2">
+                                <span id="dialogue-hsk-dropdown-label">HSK 1</span>
+                                <i class="fa-solid fa-chevron-down text-xs text-brand-400"></i>
+                            </button>
+                            <div id="dialogue-hsk-dropdown-panel" class="hidden absolute right-0 z-30 mt-1.5 w-32 bg-white border border-brand-200 rounded-xl shadow-lg py-1.5 max-h-80 overflow-y-auto">
+                                <!-- Danh sách HSK (Text 1/2/3) được dựng động bằng JS, xem renderDialogueHskDropdown() -->
+                            </div>
+                        </div>
+                        <div class="relative" id="dialogue-lesson-dropdown-wrapper">
+                            <button type="button" id="dialogue-lesson-dropdown-btn" class="bg-brand-50 border border-brand-200 text-brand-950 text-sm font-medium rounded-xl px-3.5 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none cursor-pointer min-w-[110px] flex items-center justify-between gap-2">
+                                <span id="dialogue-lesson-dropdown-label">Bài 1</span>
+                                <i class="fa-solid fa-chevron-down text-xs text-brand-400"></i>
+                            </button>
+                            <div id="dialogue-lesson-dropdown-panel" class="hidden absolute right-0 z-30 mt-1.5 w-40 bg-white border border-brand-200 rounded-xl shadow-lg py-1.5 max-h-80 overflow-y-auto">
+                                <!-- Danh sách bài được dựng động bằng JS, xem renderDialogueLessonDropdown() -->
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -3338,29 +3349,25 @@
 
         // ═══════════════════════════════════════════════════════════════
         // [HỘI THOẠI] Tải và phân tích file HỘI_THOẠI.xlsx (đặt cùng thư mục
-        // với index.html). Sheet "ĐOẠN HỘI THOẠI" có cấu trúc:
+        // với index.html). File có 3 sheet "Text 1" / "Text 2" / "Text 3" tương ứng
+        // HSK 1 / HSK 2 / HSK 3 (không tính sheet "Giới thiệu nhân vật"). Mỗi sheet
+        // có cấu trúc:
         //   - 1 dòng chỉ có số ở cột A (vd: 1, 2, 3...) = đánh dấu bắt đầu 1 BÀI mới.
         //   - Dòng đầu tiên của mỗi đoạn hội thoại con có cột A là 1 giá trị đặc biệt
         //     xác định "Bài X . Đoạn Y" (vd: X.1, X.2, X.3), cột B = tên nhân vật,
-        //     cột C = câu thoại, cột D = thời gian bắt đầu trong file mp3 (không bắt buộc),
-        //     cột E = nghĩa tiếng Việt của câu (không bắt buộc).
+        //     cột C = câu thoại (chữ Hán), cột D = pinyin của câu (đã có sẵn trong Excel),
+        //     cột E = nghĩa tiếng Việt của câu.
         //   - Các dòng tiếp theo của cùng đoạn: cột A để trống, cột B = nhân vật,
-        //     cột C = câu thoại, cột D/E như trên.
-        // Kết quả: { 1: { 1: [ {speaker, text, time, meaningVi}, ... ], 2: [...], 3: [...] }, 2: {...}, ... }
+        //     cột C/D/E như trên.
+        // Kết quả: { HSK1: { 1: { 1: [ {speaker, text, pinyin, meaningVi}, ... ], 2: [...] }, 2: {...} }, HSK2: {...}, HSK3: {...} }
         // ═══════════════════════════════════════════════════════════════
+        const DIALOGUE_HSK_SHEET_MAP = { HSK1: 'Text 1', HSK2: 'Text 2', HSK3: 'Text 3' };
+
         async function loadDialogueFromExcel() {
             const res = await fetch(encodeURI('HỘI_THOẠI.xlsx') + '?v=' + Date.now(), { cache: 'no-store' });
             if (!res.ok) throw new Error('Không tìm thấy HỘI_THOẠI.xlsx (HTTP ' + res.status + ')');
             const buf = await res.arrayBuffer();
             const workbook = XLSX.read(buf, { type: 'array' });
-
-            const sheetName = workbook.SheetNames.find(n => normalizeSheetCode(n) === normalizeSheetCode('ĐOẠN HỘI THOẠI'))
-                || workbook.SheetNames.find(n => /hoi.?thoai/i.test(normalizeSheetCode(n)))
-                || workbook.SheetNames[0];
-            const sheet = workbook.Sheets[sheetName];
-            // header:1 => trả về mảng-mảng theo đúng thứ tự dòng/cột gốc, giữ được các dòng
-            // "trống cột A" (tiếp theo của cùng 1 đoạn hội thoại) đúng như trong Excel.
-            const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null, raw: true });
 
             // Excel lưu ngày dạng số serial khi raw:true — hàm này đổi lại thành {month, day}
             // giống hệt cách Excel hiển thị ngày 01/03/2026 => day=1 (số bài), month=3 (đoạn thứ mấy).
@@ -3372,76 +3379,70 @@
                 return { day: d.getUTCDate(), month: d.getUTCMonth() + 1 };
             }
 
-            // Cho phép nhập thời gian bắt đầu của từng câu ở cột D (không bắt buộc), dùng để
-            // bấm nút 🔊 sẽ tự nhảy đến đúng đoạn trong file mp3 ghi âm cả bài (vd 4_1.mp3).
-            // Có thể nhập dạng số giây (vd 3.5) hoặc dạng phút:giây (vd 0:03, 1:05).
-            function parseTimeCell(val) {
-                if (val === null || val === undefined || val === '') return null;
-                if (typeof val === 'number') {
-                    // SheetJS trả về số giờ dạng phân số (0..1) nếu ô được định dạng Time trong Excel
-                    return val < 1 ? val * 24 * 60 * 60 : val;
-                }
-                const str = String(val).trim();
-                if (/^\d+(\.\d+)?$/.test(str)) return parseFloat(str);
-                const m = str.match(/^(\d+):(\d{1,2})(?::(\d{1,2}))?$/);
-                if (m) {
-                    const h = m[3] ? parseInt(m[1], 10) : 0;
-                    const mm = m[3] ? parseInt(m[2], 10) : parseInt(m[1], 10);
-                    const ss = m[3] ? parseInt(m[3], 10) : parseInt(m[2], 10);
-                    return h * 3600 + mm * 60 + ss;
-                }
-                return null;
+            // Phân tích 1 sheet (1 quyển/HSK) thành { lessonNum: { subNum: [ {speaker, text, pinyin, meaningVi}, ... ] } }
+            function parseDialogueSheet(sheet) {
+                const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null, raw: true });
+                const lessons = {};
+                let curLesson = null;
+                let curSub = null;
+
+                rows.forEach(row => {
+                    const a = row[0], b = row[1] ?? null, c = row[2] ?? null, d = row[3] ?? null, e = row[4] ?? null;
+                    const bStr = b !== null && b !== undefined ? String(b).trim() : '';
+                    const cStr = c !== null && c !== undefined ? String(c).trim() : '';
+                    const dStr = d !== null && d !== undefined ? String(d).trim() : '';
+                    const eStr = e !== null && e !== undefined ? String(e).trim() : '';
+
+                    if (a === null || a === undefined || a === '') {
+                        // Dòng tiếp nối của đoạn hội thoại hiện tại (không có mốc mới ở cột A)
+                        if (curLesson !== null && curSub !== null && (bStr || cStr)) {
+                            lessons[curLesson][curSub].push({ speaker: bStr, text: cStr, pinyin: dStr, meaningVi: eStr });
+                        }
+                        return;
+                    }
+
+                    // Dòng chỉ đánh dấu "Bài N" mới (cột B và C trống)
+                    if (typeof a === 'number' && Number.isInteger(a) && !bStr && !cStr) {
+                        curLesson = a;
+                        if (!lessons[curLesson]) lessons[curLesson] = {};
+                        curSub = null;
+                        return;
+                    }
+
+                    // Dòng là ngày Excel (serial number) => bắt đầu 1 đoạn hội thoại con mới
+                    if (typeof a === 'number') {
+                        let lessonNum, subNum;
+                        if (Number.isInteger(a) && a > 100) {
+                            // giá trị serial ngày Excel thực sự (đủ lớn, không thể là số Bài/Đoạn)
+                            const md = excelSerialToMonthDay(a);
+                            lessonNum = md.day;
+                            subNum = md.month;
+                        } else {
+                            // giá trị dạng thập phân kiểu 15.2 => Bài 15, đoạn 2
+                            lessonNum = Math.trunc(a);
+                            subNum = Math.round((a - lessonNum) * 10) || 1;
+                        }
+                        curLesson = lessonNum;
+                        curSub = subNum;
+                        if (!lessons[curLesson]) lessons[curLesson] = {};
+                        if (!lessons[curLesson][curSub]) lessons[curLesson][curSub] = [];
+                        if (bStr || cStr) lessons[curLesson][curSub].push({ speaker: bStr, text: cStr, pinyin: dStr, meaningVi: eStr });
+                    }
+                });
+
+                return lessons;
             }
 
-            const lessons = {}; // { lessonNum: { subNum: [ {speaker, text, time}, ... ] } }
-            let curLesson = null;
-            let curSub = null;
-
-            rows.forEach(row => {
-                const a = row[0], b = row[1] ?? null, c = row[2] ?? null, d = row[3] ?? null, e = row[4] ?? null;
-                const bStr = b !== null && b !== undefined ? String(b).trim() : '';
-                const cStr = c !== null && c !== undefined ? String(c).trim() : '';
-                const eStr = e !== null && e !== undefined ? String(e).trim() : '';
-                const time = parseTimeCell(d);
-
-                if (a === null || a === undefined || a === '') {
-                    // Dòng tiếp nối của đoạn hội thoại hiện tại (không có mốc mới ở cột A)
-                    if (curLesson !== null && curSub !== null && (bStr || cStr)) {
-                        lessons[curLesson][curSub].push({ speaker: bStr, text: cStr, time, meaningVi: eStr });
-                    }
-                    return;
-                }
-
-                // Dòng chỉ đánh dấu "Bài N" mới (cột B và C trống)
-                if (typeof a === 'number' && Number.isInteger(a) && !bStr && !cStr) {
-                    curLesson = a;
-                    if (!lessons[curLesson]) lessons[curLesson] = {};
-                    curSub = null;
-                    return;
-                }
-
-                // Dòng là ngày Excel (serial number) => bắt đầu 1 đoạn hội thoại con mới
-                if (typeof a === 'number') {
-                    let lessonNum, subNum;
-                    if (Number.isInteger(a) && a > 100) {
-                        // giá trị serial ngày Excel thực sự (đủ lớn, không thể là số Bài/Đoạn)
-                        const md = excelSerialToMonthDay(a);
-                        lessonNum = md.day;
-                        subNum = md.month;
-                    } else {
-                        // giá trị dạng thập phân kiểu 15.2 => Bài 15, đoạn 2
-                        lessonNum = Math.trunc(a);
-                        subNum = Math.round((a - lessonNum) * 10) || 1;
-                    }
-                    curLesson = lessonNum;
-                    curSub = subNum;
-                    if (!lessons[curLesson]) lessons[curLesson] = {};
-                    if (!lessons[curLesson][curSub]) lessons[curLesson][curSub] = [];
-                    if (bStr || cStr) lessons[curLesson][curSub].push({ speaker: bStr, text: cStr, time, meaningVi: eStr });
-                }
+            const result = {}; // { HSK1: {...lessons}, HSK2: {...}, HSK3: {...} }
+            Object.keys(DIALOGUE_HSK_SHEET_MAP).forEach(hskCode => {
+                const wanted = DIALOGUE_HSK_SHEET_MAP[hskCode];
+                const sheetName = workbook.SheetNames.find(n => normalizeSheetCode(n) === normalizeSheetCode(wanted))
+                    || workbook.SheetNames.find(n => normalizeSheetCode(n).replace(/\s+/g, '') === normalizeSheetCode(wanted).replace(/\s+/g, ''));
+                if (!sheetName) return;
+                result[hskCode] = parseDialogueSheet(workbook.Sheets[sheetName]);
             });
 
-            return lessons;
+            return result;
         }
 
         // Chuyển mã cấp độ (VD: "HSK789", "GT_HSK1") thành nhãn hiển thị đẹp cho người dùng.
@@ -3538,8 +3539,9 @@
             statusFilter: localStorage.getItem('zh_status_filter') || 'ALL',
             filteredVocab: [],
 
-            // [HỘI THOẠI] Dữ liệu đọc từ HỘI_THOẠI.xlsx: { [bài]: { [đoạn]: [ {speaker,text}, ... ] } }
+            // [HỘI THOẠI] Dữ liệu đọc từ HỘI_THOẠI.xlsx: { [HSK]: { [bài]: { [đoạn]: [ {speaker,text,pinyin,meaningVi}, ... ] } } }
             dialogueData: {},
+            dialogueHsk: 'HSK1',
             dialogueLesson: null,
             dialogueSub: 1,
             dialogueShowPinyin: localStorage.getItem('zh_dialogue_show_pinyin') === '1',
@@ -4334,8 +4336,43 @@
         // [HỘI THOẠI] Render giao diện: dropdown chọn Bài, tab chọn đoạn
         // (X.1 / X.2 / X.3) và khung chat hiển thị các câu thoại.
         // ═══════════════════════════════════════════════════════════════
+        // Các mã HSK có dữ liệu hội thoại thực sự (dựng dropdown "Text 1/2/3" theo dữ liệu tải được)
+        function getDialogueHskCodes() {
+            return Object.keys(DIALOGUE_HSK_SHEET_MAP).filter(code => appState.dialogueData[code] && Object.keys(appState.dialogueData[code]).length > 0);
+        }
+
+        function renderDialogueHskDropdown() {
+            const panel = document.getElementById('dialogue-hsk-dropdown-panel');
+            const label = document.getElementById('dialogue-hsk-dropdown-label');
+            if (!panel || !label) return;
+            const hskCodes = getDialogueHskCodes();
+            if (hskCodes.length === 0) {
+                panel.innerHTML = '<div class="px-3.5 py-2 text-sm text-slate-400">Không có dữ liệu</div>';
+                return;
+            }
+            if (!hskCodes.includes(appState.dialogueHsk)) {
+                appState.dialogueHsk = hskCodes[0];
+            }
+            panel.innerHTML = hskCodes.map(code => `
+                <button type="button" class="dialogue-hsk-option w-full text-left px-3.5 py-2 text-sm rounded-lg transition ${code === appState.dialogueHsk ? 'bg-brand-500 text-white font-bold' : 'text-brand-800 hover:bg-brand-50'}" data-hsk="${code}">${hskCodeToLabel(code)}</button>
+            `).join('');
+            label.textContent = hskCodeToLabel(appState.dialogueHsk);
+
+            panel.querySelectorAll('.dialogue-hsk-option').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    appState.dialogueHsk = btn.getAttribute('data-hsk');
+                    appState.dialogueLesson = null;
+                    appState.dialogueSub = 1;
+                    panel.classList.add('hidden');
+                    renderDialogueHskDropdown();
+                    renderDialogue();
+                });
+            });
+        }
+
         function getDialogueLessonNumbers() {
-            return Object.keys(appState.dialogueData).map(n => parseInt(n, 10)).sort((a, b) => a - b);
+            const lessonsForHsk = appState.dialogueData[appState.dialogueHsk] || {};
+            return Object.keys(lessonsForHsk).map(n => parseInt(n, 10)).sort((a, b) => a - b);
         }
 
         function renderDialogueLessonDropdown() {
@@ -4370,7 +4407,8 @@
             const wrap = document.getElementById('dialogue-sub-tabs');
             if (!wrap) return;
             const lesson = appState.dialogueLesson;
-            const subs = lesson !== null && appState.dialogueData[lesson] ? Object.keys(appState.dialogueData[lesson]).map(n => parseInt(n, 10)).sort((a, b) => a - b) : [];
+            const lessonsForHsk = appState.dialogueData[appState.dialogueHsk] || {};
+            const subs = lesson !== null && lessonsForHsk[lesson] ? Object.keys(lessonsForHsk[lesson]).map(n => parseInt(n, 10)).sort((a, b) => a - b) : [];
             if (!subs.includes(appState.dialogueSub)) appState.dialogueSub = subs[0] || 1;
 
             wrap.innerHTML = subs.map(s => `
@@ -4449,7 +4487,8 @@
             if (!container) return;
             const lesson = appState.dialogueLesson;
             const sub = appState.dialogueSub;
-            const lines = (lesson !== null && appState.dialogueData[lesson] && appState.dialogueData[lesson][sub]) || [];
+            const lessonsForHsk = appState.dialogueData[appState.dialogueHsk] || {};
+            const lines = (lesson !== null && lessonsForHsk[lesson] && lessonsForHsk[lesson][sub]) || [];
 
             if (lines.length === 0) {
                 container.innerHTML = '';
@@ -4476,7 +4515,7 @@
                 ${lines.map((l, idx) => {
                     const c = speakerColorMap[l.speaker] || DIALOGUE_SPEAKER_COLORS[0];
                     const hasTime = typeof l.time === 'number' && !isNaN(l.time);
-                    const pinyinText = getDialoguePinyin(l.text);
+                    const pinyinText = (l.pinyin && l.pinyin.trim()) ? l.pinyin.trim() : getDialoguePinyin(l.text);
                     const pinyinHiddenClass = appState.dialogueShowPinyin ? '' : 'hidden';
                     const meaningHiddenClass = appState.dialogueShowMeaning ? '' : 'hidden';
                     return `
@@ -4605,12 +4644,23 @@
                 if (emptyState) emptyState.classList.remove('hidden');
                 return;
             }
+            renderDialogueHskDropdown();
             renderDialogueLessonDropdown();
             renderDialogueSubTabs();
             renderDialogueBubbles();
         }
 
         function setupDialogueEvents() {
+            const hskBtn = document.getElementById('dialogue-hsk-dropdown-btn');
+            const hskPanel = document.getElementById('dialogue-hsk-dropdown-panel');
+            if (hskBtn && hskPanel) {
+                hskBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    hskPanel.classList.toggle('hidden');
+                });
+                document.addEventListener('click', () => hskPanel.classList.add('hidden'));
+            }
+
             const btn = document.getElementById('dialogue-lesson-dropdown-btn');
             const panel = document.getElementById('dialogue-lesson-dropdown-panel');
             if (btn && panel) {
@@ -8535,7 +8585,7 @@ if(activeCurriculum === 'yufa' && !yufaLoaded){
     if (checkboxRow) {
         checkboxRow.addEventListener('click', function(e) {
             e.stopPropagation();
-            toggle();
+            toggle();s
         });
     }
 
