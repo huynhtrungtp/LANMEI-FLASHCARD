@@ -2922,8 +2922,9 @@
             <section id="mode-dialogue" class="study-mode hidden flex flex-col w-full gap-5">
 
                 <div class="flex items-center justify-between gap-3 flex-wrap">
-                    <h2 class="font-extrabold text-brand-800 text-xl sm:text-2xl flex items-center gap-2">
-                        <span>💬</span> Hội Thoại
+                    <h2 class="font-extrabold text-brand-800 text-xl sm:text-2xl flex items-center gap-2 min-w-0">
+                        <span class="shrink-0">💬</span>
+                        <span id="dialogue-title-label" class="truncate font-hanzi">Hội Thoại</span>
                     </h2>
                     <div class="flex items-center gap-2">
                         <div class="relative" id="dialogue-hsk-dropdown-wrapper">
@@ -3379,12 +3380,23 @@
                 return { day: d.getUTCDate(), month: d.getUTCMonth() + 1 };
             }
 
-            // Phân tích 1 sheet (1 quyển/HSK) thành { lessonNum: { subNum: [ {speaker, text, pinyin, meaningVi}, ... ] } }
+            // Phân tích 1 sheet (1 quyển/HSK) thành { lessons: {...}, titles: {...}, contexts: {...} }
+            //   - lessons: { lessonNum: { subNum: [ {speaker, text, pinyin, meaningVi}, ... ] } } — chỉ chứa các câu thoại thật (có nhân vật nói)
+            //   - titles: { lessonNum: {hanzi, pinyin, meaningVi} } — tên/tiêu đề của cả bài (lấy từ dòng chỉ có số ở cột A, cột C/D/E là tên bài)
+            //   - contexts: { lessonNum: { subNum: {hanzi, pinyin, meaningVi} } } — câu dẫn cảnh của từng đoạn con (dòng có cột A là ngày, cột B trống)
             function parseDialogueSheet(sheet) {
                 const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null, raw: true });
                 const lessons = {};
+                const titles = {};
+                const contexts = {};
                 let curLesson = null;
                 let curSub = null;
+                // Có 2 kiểu trình bày dòng dẫn cảnh trong Excel:
+                //   (1) Dòng dẫn cảnh nằm ngay trên dòng đánh dấu đoạn mới (cột A có ngày/số thập phân, cột B trống).
+                //   (2) Dòng dẫn cảnh nằm ở 1 dòng RIÊNG phía TRƯỚC dòng đánh dấu đoạn mới (cột A trống, cột B trống),
+                //       trong khi dòng đánh dấu đoạn mới ngay sau đó lại đã có sẵn nhân vật + câu thoại đầu tiên.
+                // => Dùng biến đệm pendingContext để "giữ" câu dẫn cảnh kiểu (2) cho tới khi gặp dòng đánh dấu đoạn kế tiếp.
+                let pendingContext = null;
 
                 rows.forEach(row => {
                     const a = row[0], b = row[1] ?? null, c = row[2] ?? null, d = row[3] ?? null, e = row[4] ?? null;
@@ -3394,18 +3406,26 @@
                     const eStr = e !== null && e !== undefined ? String(e).trim() : '';
 
                     if (a === null || a === undefined || a === '') {
-                        // Dòng tiếp nối của đoạn hội thoại hiện tại (không có mốc mới ở cột A)
-                        if (curLesson !== null && curSub !== null && (bStr || cStr)) {
-                            lessons[curLesson][curSub].push({ speaker: bStr, text: cStr, pinyin: dStr, meaningVi: eStr });
+                        if (bStr) {
+                            // Có nhân vật => câu thoại thật, đẩy vào đoạn hội thoại hiện tại
+                            if (curLesson !== null && curSub !== null) {
+                                lessons[curLesson][curSub].push({ speaker: bStr, text: cStr, pinyin: dStr, meaningVi: eStr });
+                            }
+                        } else if (cStr) {
+                            // Không có nhân vật nhưng có nội dung => câu dẫn cảnh đứng riêng, đệm lại chờ đoạn kế tiếp
+                            pendingContext = { hanzi: cStr, pinyin: dStr, meaningVi: eStr };
                         }
                         return;
                     }
 
-                    // Dòng chỉ đánh dấu "Bài N" mới (cột B và C trống)
-                    if (typeof a === 'number' && Number.isInteger(a) && !bStr && !cStr) {
+                    // Dòng chỉ đánh dấu "Bài N" mới (cột B trống, N là số nguyên nhỏ — số bài luôn <=100,
+                    // để phân biệt với dòng ngày serial của Excel vốn luôn là số nguyên rất lớn, vd 46023).
+                    if (typeof a === 'number' && Number.isInteger(a) && !bStr && a <= 100) {
                         curLesson = a;
                         if (!lessons[curLesson]) lessons[curLesson] = {};
+                        if (cStr || dStr || eStr) titles[curLesson] = { hanzi: cStr, pinyin: dStr, meaningVi: eStr };
                         curSub = null;
+                        pendingContext = null; // câu dẫn cảnh đệm (nếu có) thuộc bài trước, không liên quan bài mới
                         return;
                     }
 
@@ -3426,14 +3446,29 @@
                         curSub = subNum;
                         if (!lessons[curLesson]) lessons[curLesson] = {};
                         if (!lessons[curLesson][curSub]) lessons[curLesson][curSub] = [];
-                        if (bStr || cStr) lessons[curLesson][curSub].push({ speaker: bStr, text: cStr, pinyin: dStr, meaningVi: eStr });
+
+                        // Câu dẫn cảnh của đoạn này: ưu tiên câu đã đệm sẵn từ dòng trước (kiểu 2);
+                        // nếu không có, dùng chính cột C của dòng này khi dòng này không có nhân vật (kiểu 1).
+                        if (pendingContext) {
+                            if (!contexts[curLesson]) contexts[curLesson] = {};
+                            contexts[curLesson][curSub] = pendingContext;
+                            pendingContext = null;
+                        } else if (!bStr && cStr) {
+                            if (!contexts[curLesson]) contexts[curLesson] = {};
+                            contexts[curLesson][curSub] = { hanzi: cStr, pinyin: dStr, meaningVi: eStr };
+                        }
+
+                        // Nếu dòng đánh dấu này ĐỒNG THỜI đã có nhân vật + câu thoại (kiểu 2), đẩy luôn vào hội thoại.
+                        if (bStr) {
+                            lessons[curLesson][curSub].push({ speaker: bStr, text: cStr, pinyin: dStr, meaningVi: eStr });
+                        }
                     }
                 });
 
-                return lessons;
+                return { lessons, titles, contexts };
             }
 
-            const result = {}; // { HSK1: {...lessons}, HSK2: {...}, HSK3: {...} }
+            const result = {}; // { HSK1: { lessons, titles, contexts }, HSK2: {...}, HSK3: {...} }
             Object.keys(DIALOGUE_HSK_SHEET_MAP).forEach(hskCode => {
                 const wanted = DIALOGUE_HSK_SHEET_MAP[hskCode];
                 const sheetName = workbook.SheetNames.find(n => normalizeSheetCode(n) === normalizeSheetCode(wanted))
@@ -4338,7 +4373,7 @@
         // ═══════════════════════════════════════════════════════════════
         // Các mã HSK có dữ liệu hội thoại thực sự (dựng dropdown "Text 1/2/3" theo dữ liệu tải được)
         function getDialogueHskCodes() {
-            return Object.keys(DIALOGUE_HSK_SHEET_MAP).filter(code => appState.dialogueData[code] && Object.keys(appState.dialogueData[code]).length > 0);
+            return Object.keys(DIALOGUE_HSK_SHEET_MAP).filter(code => appState.dialogueData[code] && appState.dialogueData[code].lessons && Object.keys(appState.dialogueData[code].lessons).length > 0);
         }
 
         function renderDialogueHskDropdown() {
@@ -4371,8 +4406,22 @@
         }
 
         function getDialogueLessonNumbers() {
-            const lessonsForHsk = appState.dialogueData[appState.dialogueHsk] || {};
+            const lessonsForHsk = (appState.dialogueData[appState.dialogueHsk] && appState.dialogueData[appState.dialogueHsk].lessons) || {};
             return Object.keys(lessonsForHsk).map(n => parseInt(n, 10)).sort((a, b) => a - b);
+        }
+
+        // Lấy tên bài (tiêu đề) của 1 bài trong 1 quyển HSK — dùng để thay chữ "Hội Thoại" ở tiêu đề.
+        function getDialogueLessonTitle(hskCode, lesson) {
+            const titles = (appState.dialogueData[hskCode] && appState.dialogueData[hskCode].titles) || {};
+            return titles[lesson] || null;
+        }
+
+        // Cập nhật chữ ở tiêu đề (thay "Hội Thoại" bằng tên bài đang xem, nếu có)
+        function updateDialogueTitleHeader() {
+            const label = document.getElementById('dialogue-title-label');
+            if (!label) return;
+            const title = appState.dialogueLesson !== null ? getDialogueLessonTitle(appState.dialogueHsk, appState.dialogueLesson) : null;
+            label.textContent = (title && title.hanzi) ? title.hanzi : 'Hội Thoại';
         }
 
         function renderDialogueLessonDropdown() {
@@ -4407,7 +4456,7 @@
             const wrap = document.getElementById('dialogue-sub-tabs');
             if (!wrap) return;
             const lesson = appState.dialogueLesson;
-            const lessonsForHsk = appState.dialogueData[appState.dialogueHsk] || {};
+            const lessonsForHsk = (appState.dialogueData[appState.dialogueHsk] && appState.dialogueData[appState.dialogueHsk].lessons) || {};
             const subs = lesson !== null && lessonsForHsk[lesson] ? Object.keys(lessonsForHsk[lesson]).map(n => parseInt(n, 10)).sort((a, b) => a - b) : [];
             if (!subs.includes(appState.dialogueSub)) appState.dialogueSub = subs[0] || 1;
 
@@ -4487,8 +4536,12 @@
             if (!container) return;
             const lesson = appState.dialogueLesson;
             const sub = appState.dialogueSub;
-            const lessonsForHsk = appState.dialogueData[appState.dialogueHsk] || {};
+            const dataForHsk = appState.dialogueData[appState.dialogueHsk] || {};
+            const lessonsForHsk = dataForHsk.lessons || {};
             const lines = (lesson !== null && lessonsForHsk[lesson] && lessonsForHsk[lesson][sub]) || [];
+            const context = (lesson !== null && dataForHsk.contexts && dataForHsk.contexts[lesson] && dataForHsk.contexts[lesson][sub]) || null;
+
+            updateDialogueTitleHeader();
 
             if (lines.length === 0) {
                 container.innerHTML = '';
@@ -4509,6 +4562,12 @@
 
             container.innerHTML = `
                 <p class="text-center text-xs font-bold text-brand-400 uppercase tracking-wider mb-1">Bài ${lesson}.${sub}</p>
+                ${context && context.hanzi ? `
+                <div class="text-center text-xs sm:text-sm text-slate-500 italic bg-slate-50 border border-slate-100 rounded-xl px-3 py-2 mb-1">
+                    <p class="font-hanzi">${escapeHtml(context.hanzi)}</p>
+                    ${context.pinyin ? `<p class="dialogue-pinyin-line ${appState.dialogueShowPinyin ? '' : 'hidden'} not-italic text-brand-500/80 mt-0.5">${escapeHtml(context.pinyin)}</p>` : ''}
+                    ${context.meaningVi ? `<p class="dialogue-meaning-line ${appState.dialogueShowMeaning ? '' : 'hidden'} mt-0.5">${escapeHtml(context.meaningVi)}</p>` : ''}
+                </div>` : ''}
                 <div id="dialogue-audio-wrapper" class="hidden mb-2">
                     <audio id="dialogue-audio-player" controls preload="metadata" class="w-full h-10"></audio>
                 </div>
