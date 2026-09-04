@@ -2950,15 +2950,15 @@
                 </div>
 
                 <!-- Tab chọn đoạn hội thoại con (X.1 / X.2 / X.3) + nút ẩn/hiện Pinyin -->
-                <div class="flex items-center justify-center gap-2 flex-wrap">
-                    <div class="flex gap-1.5 bg-brand-50 border border-brand-200 rounded-xl p-1 w-fit" id="dialogue-sub-tabs">
+                <div class="flex items-center justify-start sm:justify-center gap-1.5 sm:gap-2 flex-nowrap overflow-x-auto scrollbar-none pb-1 -mx-4 px-4 sm:mx-0 sm:px-0">
+                    <div class="flex gap-1 sm:gap-1.5 bg-brand-50 border border-brand-200 rounded-xl p-1 w-fit shrink-0" id="dialogue-sub-tabs">
                         <!-- Dựng động bằng JS -->
                     </div>
-                    <button type="button" id="dialogue-pinyin-toggle-btn" class="flex items-center gap-1.5 bg-brand-50 border border-brand-200 hover:bg-brand-100 text-brand-700 text-xs sm:text-sm font-bold rounded-xl px-3 py-2 transition">
+                    <button type="button" id="dialogue-pinyin-toggle-btn" class="shrink-0 flex items-center gap-1 sm:gap-1.5 bg-brand-50 border border-brand-200 hover:bg-brand-100 text-brand-700 text-[11px] sm:text-sm font-bold rounded-xl px-2.5 sm:px-3 py-2 transition whitespace-nowrap">
                         <i class="fa-solid fa-eye"></i>
                         <span>Pinyin</span>
                     </button>
-                    <button type="button" id="dialogue-meaning-toggle-btn" class="flex items-center gap-1.5 bg-brand-50 border border-brand-200 hover:bg-brand-100 text-brand-700 text-xs sm:text-sm font-bold rounded-xl px-3 py-2 transition">
+                    <button type="button" id="dialogue-meaning-toggle-btn" class="shrink-0 flex items-center gap-1 sm:gap-1.5 bg-brand-50 border border-brand-200 hover:bg-brand-100 text-brand-700 text-[11px] sm:text-sm font-bold rounded-xl px-2.5 sm:px-3 py-2 transition whitespace-nowrap">
                         <i class="fa-solid fa-eye"></i>
                         <span>Nghĩa</span>
                     </button>
@@ -4475,7 +4475,7 @@
             if (!subs.includes(appState.dialogueSub)) appState.dialogueSub = subs[0] || 1;
 
             wrap.innerHTML = subs.map(s => `
-                <button type="button" data-sub="${s}" class="dialogue-sub-tab-btn px-4 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition ${s === appState.dialogueSub ? 'bg-brand-500 text-white shadow-md shadow-brand-500/20' : 'text-brand-700 hover:bg-brand-100'}">${lesson}.${s}</button>
+                <button type="button" data-sub="${s}" class="dialogue-sub-tab-btn px-2.5 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap ${s === appState.dialogueSub ? 'bg-brand-500 text-white shadow-md shadow-brand-500/20' : 'text-brand-700 hover:bg-brand-100'}">${lesson}.${s}</button>
             `).join('');
 
             wrap.querySelectorAll('.dialogue-sub-tab-btn').forEach(btn => {
