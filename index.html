@@ -239,6 +239,15 @@
             justify-content: flex-start;
         }
 
+        /* Thẻ Nhớ: chỉ ghim lên đầu trang trên mobile (nội dung ngắn hơn màn hình
+           khiến justify-content: center tạo khoảng trống lớn phía trên, giữa thanh
+           chọn HSK và thẻ flashcard). Trên desktop vẫn giữ căn giữa như cũ. */
+        @media (max-width: 767px) {
+            #view-container:has(#mode-flashcard:not(.hidden)) {
+                justify-content: flex-start;
+            }
+        }
+
         /* Trên mobile: ẩn thanh chọn Sổ Tay (HSK) khi đang ở Trang Chủ.
            Thanh này chỉ cần hiện lại khi vào các chế độ học khác (Thẻ Nhớ, Bài Tập...) */
         @media (max-width: 767px) {
