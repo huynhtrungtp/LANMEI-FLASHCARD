@@ -2922,9 +2922,9 @@
             <section id="mode-dialogue" class="study-mode hidden flex flex-col w-full gap-5">
 
                 <div class="flex items-center justify-between gap-3 flex-wrap">
-                    <h2 class="font-extrabold text-brand-800 text-xl sm:text-2xl flex items-center gap-2 min-w-0">
+                    <h2 class="font-extrabold text-brand-800 text-base sm:text-2xl flex items-center gap-2 min-w-0 w-full sm:w-auto flex-1 sm:flex-initial">
                         <span class="shrink-0">💬</span>
-                        <span id="dialogue-title-label" class="truncate font-hanzi">Hội Thoại</span>
+                        <span id="dialogue-title-label" class="truncate min-w-0 flex-1 font-hanzi">Hội Thoại</span>
                     </h2>
                     <div class="flex items-center gap-2">
                         <div class="relative" id="dialogue-hsk-dropdown-wrapper">
@@ -4564,7 +4564,6 @@
                         <p class="text-center text-xs font-bold text-brand-400 uppercase tracking-wider mb-1">Bài ${lesson}.${sub}</p>
                         <div class="text-slate-700 bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3.5 shadow-sm">
                             ${context.meaningVi ? `<p class="text-base font-bold text-slate-700 leading-snug">${escapeHtml(context.meaningVi)}</p>` : ''}
-                            <p class="dialogue-hanzi-context-line font-hanzi text-lg leading-snug ${context.meaningVi ? 'mt-1 pt-1 border-t border-black/5' : ''}">${escapeHtml(context.hanzi)}</p>
                             ${context.pinyin ? `<p class="dialogue-pinyin-line ${appState.dialogueShowPinyin ? '' : 'hidden'} text-sm font-semibold text-brand-500/80 mt-1 tracking-wide">${escapeHtml(context.pinyin)}</p>` : ''}
                         </div>
                     `;
@@ -4595,7 +4594,6 @@
                 ${context && context.hanzi ? `
                 <div class="text-center text-xs sm:text-sm text-slate-500 bg-slate-50 border border-slate-100 rounded-xl px-3 py-2 mb-1">
                     ${context.meaningVi ? `<p class="not-italic font-bold text-slate-700">${escapeHtml(context.meaningVi)}</p>` : ''}
-                    <p class="dialogue-hanzi-context-line font-hanzi italic ${context.meaningVi ? 'mt-0.5' : ''}">${escapeHtml(context.hanzi)}</p>
                     ${context.pinyin ? `<p class="dialogue-pinyin-line ${appState.dialogueShowPinyin ? '' : 'hidden'} not-italic text-brand-500/80 mt-0.5">${escapeHtml(context.pinyin)}</p>` : ''}
                 </div>` : ''}
                 <div id="dialogue-audio-wrapper" class="hidden mb-2">
