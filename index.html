@@ -2468,10 +2468,6 @@
 
             <section id="mode-flashcard" class="study-mode flex flex-col items-center justify-center max-w-2xl mx-auto w-full gap-5">
                 
-                <div class="w-full bg-brand-100 rounded-full h-2.5 overflow-hidden border border-brand-200">
-                    <div id="flashcard-progress" class="bg-gradient-to-r from-brand-500 to-accent-500 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
-                </div>
-
                 <div class="flex justify-between w-full text-xs font-semibold text-brand-800 px-1">
                     <div class="flex items-center gap-2">
                         <div class="flex items-center gap-1 bg-brand-50 border border-brand-200 rounded-full p-0.5">
@@ -2525,12 +2521,11 @@
                                 <p id="card-pinyin" class="text-2xl sm:text-3xl font-semibold text-brand-600 tracking-wide">
                                     nǐ hǎo
                                 </p>
-                                <p id="card-hanviet" class="text-xs font-semibold uppercase tracking-widest text-accent-700 bg-accent-50 px-3 py-1 rounded-lg border border-accent-200">
-                                    Âm Hán Việt: Nhĩ Hảo
-                                </p>
-                                <p id="card-wordtype" class="text-xs font-bold uppercase tracking-widest text-mint-700 bg-mint-50 px-3 py-1 rounded-lg border border-mint-100">
-                                    Thán từ
-                                </p>
+                                <div id="card-type-hanviet" class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-mint-700 bg-mint-50 px-3 py-1 rounded-lg border border-mint-100">
+                                    <span id="card-wordtype">Thán từ</span>
+                                    <span id="card-wordtype-sep" class="text-mint-300">-</span>
+                                    <span id="card-hanviet" class="text-accent-700">Nhĩ Hảo</span>
+                                </div>
                                 <p id="card-front-meaning" class="hidden text-lg font-bold text-slate-700 mt-1">
                                     Xin chào
                                 </p>
@@ -2552,12 +2547,11 @@
                                 <p id="card-back-pinyin" class="text-lg sm:text-xl font-semibold text-brand-600 tracking-wide">
                                     nǐ hǎo
                                 </p>
-                                <p id="card-back-hanviet" class="text-xs font-semibold uppercase tracking-widest text-accent-700 bg-accent-50 px-3 py-1 rounded-lg border border-accent-200">
-                                    Âm Hán Việt: Nhĩ Hảo
-                                </p>
-                                <p id="card-back-wordtype" class="text-xs font-bold uppercase tracking-widest text-mint-700 bg-mint-50 px-3 py-1 rounded-lg border border-mint-100">
-                                    Thán từ
-                                </p>
+                                <div id="card-back-type-hanviet" class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-mint-700 bg-mint-50 px-3 py-1 rounded-lg border border-mint-100">
+                                    <span id="card-back-wordtype">Thán từ</span>
+                                    <span id="card-back-wordtype-sep" class="text-mint-300">-</span>
+                                    <span id="card-back-hanviet" class="text-accent-700">Nhĩ Hảo</span>
+                                </div>
                                 <h3 id="card-meaning" class="text-2xl sm:text-3xl font-bold text-accent-700">
                                     Xin chào
                                 </h3>
@@ -5948,11 +5942,11 @@
 
             document.getElementById('card-hanzi').innerText = word.hanzi;
             document.getElementById('card-pinyin').innerText = word.pinyin;
-            document.getElementById('card-hanviet').innerText = `Âm Hán Việt: ${word.hanViet || 'N/A'}`;
+            document.getElementById('card-hanviet').innerText = word.hanViet || 'N/A';
             document.getElementById('card-wordtype').innerText = word.wordType || '';
             document.getElementById('card-back-hanzi').innerText = word.hanzi;
             document.getElementById('card-back-pinyin').innerText = word.pinyin;
-            document.getElementById('card-back-hanviet').innerText = `Âm Hán Việt: ${word.hanViet || 'N/A'}`;
+            document.getElementById('card-back-hanviet').innerText = word.hanViet || 'N/A';
             document.getElementById('card-back-wordtype').innerText = word.wordType || '';
             document.getElementById('card-meaning').innerText = word.meaning;
 
@@ -5965,10 +5959,18 @@
             document.getElementById('card-back-hanzi').classList.toggle('hidden', !showsBack(fv.hanzi));
             document.getElementById('card-pinyin').classList.toggle('hidden', !showsFront(fv.pinyin));
             document.getElementById('card-back-pinyin').classList.toggle('hidden', !showsBack(fv.pinyin));
-            document.getElementById('card-hanviet').classList.toggle('hidden', !showsFront(fv.hanviet));
-            document.getElementById('card-back-hanviet').classList.toggle('hidden', !showsBack(fv.hanviet));
-            document.getElementById('card-wordtype').classList.toggle('hidden', !word.wordType || !showsFront(fv.wordtype));
-            document.getElementById('card-back-wordtype').classList.toggle('hidden', !word.wordType || !showsBack(fv.wordtype));
+            const hvFrontShow = showsFront(fv.hanviet);
+            const hvBackShow = showsBack(fv.hanviet);
+            const wtFrontShow = !!word.wordType && showsFront(fv.wordtype);
+            const wtBackShow = !!word.wordType && showsBack(fv.wordtype);
+            document.getElementById('card-hanviet').classList.toggle('hidden', !hvFrontShow);
+            document.getElementById('card-back-hanviet').classList.toggle('hidden', !hvBackShow);
+            document.getElementById('card-wordtype').classList.toggle('hidden', !wtFrontShow);
+            document.getElementById('card-back-wordtype').classList.toggle('hidden', !wtBackShow);
+            document.getElementById('card-wordtype-sep').classList.toggle('hidden', !(wtFrontShow && hvFrontShow));
+            document.getElementById('card-back-wordtype-sep').classList.toggle('hidden', !(wtBackShow && hvBackShow));
+            document.getElementById('card-type-hanviet').classList.toggle('hidden', !(wtFrontShow || hvFrontShow));
+            document.getElementById('card-back-type-hanviet').classList.toggle('hidden', !(wtBackShow || hvBackShow));
             document.getElementById('card-front-meaning').classList.toggle('hidden', !showsFront(fv.meaning));
             document.getElementById('card-meaning').classList.toggle('hidden', !showsBack(fv.meaning));
 
@@ -5981,9 +5983,6 @@
             document.getElementById('card-example-vi').innerText = word.exampleVi || word.meaning;
 
             cancelPronunciationCheck();
-
-            const pct = Math.round(((appState.cardIndex + 1) / appState.filteredVocab.length) * 100);
-            document.getElementById('flashcard-progress').style.width = `${pct}%`;
 
             const status = appState.mastered.includes(word.id) ? 'mastered'
                 : appState.unknown.includes(word.id) ? 'unknown'
