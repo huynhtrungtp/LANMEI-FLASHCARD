@@ -4563,9 +4563,9 @@
                     container.innerHTML = `
                         <p class="text-center text-xs font-bold text-brand-400 uppercase tracking-wider mb-1">Bài ${lesson}.${sub}</p>
                         <div class="text-slate-700 bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3.5 shadow-sm">
-                            <p class="font-hanzi text-lg leading-snug">${escapeHtml(context.hanzi)}</p>
+                            ${context.meaningVi ? `<p class="text-base font-bold text-slate-700 leading-snug">${escapeHtml(context.meaningVi)}</p>` : ''}
+                            <p class="dialogue-hanzi-context-line font-hanzi text-lg leading-snug ${context.meaningVi ? 'mt-1 pt-1 border-t border-black/5' : ''}">${escapeHtml(context.hanzi)}</p>
                             ${context.pinyin ? `<p class="dialogue-pinyin-line ${appState.dialogueShowPinyin ? '' : 'hidden'} text-sm font-semibold text-brand-500/80 mt-1 tracking-wide">${escapeHtml(context.pinyin)}</p>` : ''}
-                            ${context.meaningVi ? `<p class="dialogue-meaning-line ${appState.dialogueShowMeaning ? '' : 'hidden'} text-sm text-slate-500 italic mt-1 pt-1 border-t border-black/5">${escapeHtml(context.meaningVi)}</p>` : ''}
                         </div>
                     `;
                     if (emptyState) emptyState.classList.add('hidden');
@@ -4593,10 +4593,10 @@
             container.innerHTML = `
                 <p class="text-center text-xs font-bold text-brand-400 uppercase tracking-wider mb-1">Bài ${lesson}.${sub}</p>
                 ${context && context.hanzi ? `
-                <div class="text-center text-xs sm:text-sm text-slate-500 italic bg-slate-50 border border-slate-100 rounded-xl px-3 py-2 mb-1">
-                    <p class="font-hanzi">${escapeHtml(context.hanzi)}</p>
+                <div class="text-center text-xs sm:text-sm text-slate-500 bg-slate-50 border border-slate-100 rounded-xl px-3 py-2 mb-1">
+                    ${context.meaningVi ? `<p class="not-italic font-bold text-slate-700">${escapeHtml(context.meaningVi)}</p>` : ''}
+                    <p class="dialogue-hanzi-context-line font-hanzi italic ${context.meaningVi ? 'mt-0.5' : ''}">${escapeHtml(context.hanzi)}</p>
                     ${context.pinyin ? `<p class="dialogue-pinyin-line ${appState.dialogueShowPinyin ? '' : 'hidden'} not-italic text-brand-500/80 mt-0.5">${escapeHtml(context.pinyin)}</p>` : ''}
-                    ${context.meaningVi ? `<p class="dialogue-meaning-line ${appState.dialogueShowMeaning ? '' : 'hidden'} mt-0.5">${escapeHtml(context.meaningVi)}</p>` : ''}
                 </div>` : ''}
                 <div id="dialogue-audio-wrapper" class="hidden mb-2">
                     <audio id="dialogue-audio-player" controls preload="metadata" class="w-full h-10"></audio>
