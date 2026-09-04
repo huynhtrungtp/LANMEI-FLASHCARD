@@ -2528,6 +2528,9 @@
                                 <p id="card-hanviet" class="text-xs font-semibold uppercase tracking-widest text-accent-700 bg-accent-50 px-3 py-1 rounded-lg border border-accent-200">
                                     Âm Hán Việt: Nhĩ Hảo
                                 </p>
+                                <p id="card-wordtype" class="text-xs font-bold uppercase tracking-widest text-mint-700 bg-mint-50 px-3 py-1 rounded-lg border border-mint-100">
+                                    Thán từ
+                                </p>
                                 <p id="card-front-meaning" class="hidden text-lg font-bold text-slate-700 mt-1">
                                     Xin chào
                                 </p>
@@ -2551,6 +2554,9 @@
                                 </p>
                                 <p id="card-back-hanviet" class="text-xs font-semibold uppercase tracking-widest text-accent-700 bg-accent-50 px-3 py-1 rounded-lg border border-accent-200">
                                     Âm Hán Việt: Nhĩ Hảo
+                                </p>
+                                <p id="card-back-wordtype" class="text-xs font-bold uppercase tracking-widest text-mint-700 bg-mint-50 px-3 py-1 rounded-lg border border-mint-100">
+                                    Thán từ
                                 </p>
                                 <h3 id="card-meaning" class="text-2xl sm:text-3xl font-bold text-accent-700">
                                     Xin chào
@@ -3007,6 +3013,11 @@
                 </div>
 
                 <div>
+                    <label class="block text-xs font-bold text-brand-800 mb-1">Loại từ</label>
+                    <input type="text" id="input-wordtype" placeholder="VD: Danh từ" class="w-full bg-brand-50 border border-brand-200 rounded-xl px-3.5 py-2 text-sm text-brand-950 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                </div>
+
+                <div>
                     <label class="block text-xs font-bold text-brand-800 mb-1">Nghĩa Tiếng Việt *</label>
                     <input type="text" id="input-meaning" required placeholder="VD: Bạn bè" class="w-full bg-brand-50 border border-brand-200 rounded-xl px-3.5 py-2 text-sm text-brand-950 focus:ring-2 focus:ring-brand-500 focus:outline-none">
                 </div>
@@ -3070,6 +3081,14 @@
                 <div class="px-3.5 py-2.5 bg-brand-50 border border-brand-200 rounded-xl">
                     <span class="text-sm font-bold text-brand-900 block mb-2">Hán Việt</span>
                     <select data-field="hanviet" class="field-side-select w-full bg-white border border-brand-200 text-brand-950 text-sm font-medium rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none cursor-pointer">
+                        <option value="front">Mặt trước</option>
+                        <option value="back">Mặt sau</option>
+                        <option value="both">Mặt trước & mặt sau</option>
+                    </select>
+                </div>
+                <div class="px-3.5 py-2.5 bg-brand-50 border border-brand-200 rounded-xl">
+                    <span class="text-sm font-bold text-brand-900 block mb-2">Loại từ</span>
+                    <select data-field="wordtype" class="field-side-select w-full bg-white border border-brand-200 text-brand-950 text-sm font-medium rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none cursor-pointer">
                         <option value="front">Mặt trước</option>
                         <option value="back">Mặt sau</option>
                         <option value="both">Mặt trước & mặt sau</option>
@@ -3282,8 +3301,8 @@
         // Dữ liệu dự phòng tối thiểu — chỉ dùng khi KHÔNG tải được Tu vung.xlsx
         // (ví dụ: mở file trực tiếp qua file:// thay vì host qua http/https, hoặc thiếu file trên GitHub)
         const FALLBACK_VOCABULARY = [
-            { id: 'fallback-1', hanzi: '你好', pinyin: 'nǐ hǎo', hanViet: 'Nhĩ Hảo', meaning: 'Xin chào', hsk: 'HSK1', category: 'Chào hỏi', exampleCn: '你好，很高兴认识你！', examplePinyin: 'Nǐ hǎo, hěn gāoxìng rènshí nǐ!', exampleVi: 'Xin chào, rất vui được quen biết bạn!' },
-            { id: 'fallback-2', hanzi: '谢谢', pinyin: 'xiè xie', hanViet: 'Tạ Tạ', meaning: 'Cảm ơn', hsk: 'HSK1', category: 'Giao tiếp', exampleCn: '非常谢谢你的帮助。', examplePinyin: 'Fēicháng xièxiè nǐ de bāngzhù.', exampleVi: 'Rất cảm ơn sự giúp đỡ của bạn.' }
+            { id: 'fallback-1', hanzi: '你好', pinyin: 'nǐ hǎo', hanViet: 'Nhĩ Hảo', wordType: 'Thán từ', meaning: 'Xin chào', hsk: 'HSK1', category: 'Chào hỏi', exampleCn: '你好，很高兴认识你！', examplePinyin: 'Nǐ hǎo, hěn gāoxìng rènshí nǐ!', exampleVi: 'Xin chào, rất vui được quen biết bạn!' },
+            { id: 'fallback-2', hanzi: '谢谢', pinyin: 'xiè xie', hanViet: 'Tạ Tạ', wordType: 'Động từ', meaning: 'Cảm ơn', hsk: 'HSK1', category: 'Giao tiếp', exampleCn: '非常谢谢你的帮助。', examplePinyin: 'Fēicháng xièxiè nǐ de bāngzhù.', exampleVi: 'Rất cảm ơn sự giúp đỡ của bạn.' }
         ];
 
         // Danh sách các sheet (giáo trình/cấp độ) mà app sẽ tìm trong Tu vung.xlsx.
@@ -3326,14 +3345,18 @@
                     vocab.push({
                         id: `${level.toLowerCase()}-${idx + 1}`,
                         hanzi,
-                        pinyin: String(row['Pinyin'] || '').trim(),
+                        // Cột "Phiên âm" (tên cột mới). Vẫn nhận "Pinyin" để tương thích file Excel cũ.
+                        pinyin: String(row['Phiên âm'] || row['Pinyin'] || '').trim(),
                         hanViet: String(row['Hán Việt'] || row['Hán việt'] || '').trim(),
+                        // Cột "Loại từ" (danh từ / động từ / tính từ...)
+                        wordType: String(row['Loại từ'] || row['Loại Từ'] || '').trim(),
                         meaning: String(row['Nghĩa'] || '').trim(),
                         hsk: level,
                         category: bai ? `Bài ${bai}` : '',
                         lesson: lessonNum,
                         exampleCn: String(row['Ví dụ câu'] || '').trim(),
-                        examplePinyin: String(row['Pinyin câu'] || '').trim(),
+                        // Cột "Phiên âm câu" (tên cột mới). Vẫn nhận "Pinyin câu" để tương thích file Excel cũ.
+                        examplePinyin: String(row['Phiên âm câu'] || row['Pinyin câu'] || '').trim(),
                         exampleVi: String(row['Nghĩa câu'] || '').trim()
                     });
                 });
@@ -3607,7 +3630,7 @@
             activeMediaRecorder: null,
             activeRecognition: null,
             cardFieldsVisible: (() => {
-                const defaults = { hanzi: 'both', pinyin: 'front', hanviet: 'front', meaning: 'both' };
+                const defaults = { hanzi: 'both', pinyin: 'front', hanviet: 'front', wordtype: 'front', meaning: 'both' };
                 const saved = JSON.parse(localStorage.getItem('zh_card_fields') || '{}');
                 const merged = Object.assign(defaults, saved);
                 // Di chuyển dữ liệu cũ: trước đây các trường là boolean (chỉ áp dụng cho mặt trước)
@@ -5911,8 +5934,8 @@
 
         function renderFlashcard() {
             if (appState.filteredVocab.length === 0) {
-                ['card-hanzi','card-pinyin','card-hanviet','card-front-meaning',
-                 'card-back-hanzi','card-back-pinyin','card-back-hanviet','card-meaning',
+                ['card-hanzi','card-pinyin','card-hanviet','card-wordtype','card-front-meaning',
+                 'card-back-hanzi','card-back-pinyin','card-back-hanviet','card-back-wordtype','card-meaning',
                  'card-example-cn','card-example-pinyin','card-example-vi']
                  .forEach(id => { const el = document.getElementById(id); if (el) el.innerText = ''; });
                 document.getElementById('card-seq-badge').innerText = '0/0';
@@ -5926,9 +5949,11 @@
             document.getElementById('card-hanzi').innerText = word.hanzi;
             document.getElementById('card-pinyin').innerText = word.pinyin;
             document.getElementById('card-hanviet').innerText = `Âm Hán Việt: ${word.hanViet || 'N/A'}`;
+            document.getElementById('card-wordtype').innerText = word.wordType || '';
             document.getElementById('card-back-hanzi').innerText = word.hanzi;
             document.getElementById('card-back-pinyin').innerText = word.pinyin;
             document.getElementById('card-back-hanviet').innerText = `Âm Hán Việt: ${word.hanViet || 'N/A'}`;
+            document.getElementById('card-back-wordtype').innerText = word.wordType || '';
             document.getElementById('card-meaning').innerText = word.meaning;
 
             document.getElementById('card-front-meaning').innerText = word.meaning;
@@ -5942,11 +5967,13 @@
             document.getElementById('card-back-pinyin').classList.toggle('hidden', !showsBack(fv.pinyin));
             document.getElementById('card-hanviet').classList.toggle('hidden', !showsFront(fv.hanviet));
             document.getElementById('card-back-hanviet').classList.toggle('hidden', !showsBack(fv.hanviet));
+            document.getElementById('card-wordtype').classList.toggle('hidden', !word.wordType || !showsFront(fv.wordtype));
+            document.getElementById('card-back-wordtype').classList.toggle('hidden', !word.wordType || !showsBack(fv.wordtype));
             document.getElementById('card-front-meaning').classList.toggle('hidden', !showsFront(fv.meaning));
             document.getElementById('card-meaning').classList.toggle('hidden', !showsBack(fv.meaning));
 
             // Đảm bảo mặt sau luôn hiện nghĩa nếu tất cả field đều ẩn
-            const backHidden = !showsBack(fv.hanzi) && !showsBack(fv.pinyin) && !showsBack(fv.hanviet) && !showsBack(fv.meaning);
+            const backHidden = !showsBack(fv.hanzi) && !showsBack(fv.pinyin) && !showsBack(fv.hanviet) && !showsBack(fv.wordtype) && !showsBack(fv.meaning);
             if (backHidden) document.getElementById('card-meaning').classList.remove('hidden');
             
             document.getElementById('card-example-cn').innerText = word.exampleCn || word.hanzi;
@@ -7051,6 +7078,7 @@
                     hanzi: document.getElementById('input-hanzi').value.trim(),
                     pinyin: document.getElementById('input-pinyin').value.trim(),
                     hanViet: document.getElementById('input-hanviet').value.trim(),
+                    wordType: document.getElementById('input-wordtype').value.trim(),
                     meaning: document.getElementById('input-meaning').value.trim(),
                     exampleCn: document.getElementById('input-example-cn').value.trim(),
                     exampleVi: document.getElementById('input-example-vi').value.trim(),
@@ -7091,8 +7119,8 @@
 
             document.getElementById('btn-download-template').addEventListener('click', () => {
                 const sampleData = [
-                    { "Hán tự": "高", "Pinyin": "gāo", "Hán Việt": "Cao", "Nghĩa": "Cao", "Ví dụ câu": "他很高。" },
-                    { "Hán tự": "开心", "Pinyin": "kāixīn", "Hán Việt": "Khai Tâm", "Nghĩa": "Vui vẻ", "Ví dụ câu": "我今天很开心。" }
+                    { "Hán tự": "高", "Phiên âm": "gāo", "Hán Việt": "Cao", "Loại từ": "Tính từ", "Nghĩa": "Cao", "Ví dụ câu": "他很高。" },
+                    { "Hán tự": "开心", "Phiên âm": "kāixīn", "Hán Việt": "Khai Tâm", "Loại từ": "Tính từ", "Nghĩa": "Vui vẻ", "Ví dụ câu": "我今天很开心。" }
                 ];
                 const ws = XLSX.utils.json_to_sheet(sampleData);
                 const wb = XLSX.utils.book_new();
@@ -7113,7 +7141,8 @@
                     let count = 0;
                     rows.forEach((row, i) => {
                         const hanzi = row['Hán tự'] || row['Hanzi'] || row['hanzi'];
-                        const pinyin = row['Pinyin'] || row['pinyin'] || '';
+                        const pinyin = row['Phiên âm'] || row['Pinyin'] || row['pinyin'] || '';
+                        const wordType = row['Loại từ'] || row['Loại Từ'] || '';
                         const meaning = row['Nghĩa'] || row['Meaning'] || row['meaning'];
                         const exampleCn = row['Ví dụ câu'] || row['Ví dụ'] || row['Example'] || '';
 
@@ -7123,6 +7152,7 @@
                                 hanzi: String(hanzi).trim(),
                                 pinyin: String(pinyin).trim(),
                                 hanViet: String(row['Hán Việt'] || '').trim(),
+                                wordType: String(wordType).trim(),
                                 meaning: String(meaning).trim(),
                                 exampleCn: String(exampleCn).trim(),
                                 hsk: 'HSK1'
