@@ -3412,8 +3412,19 @@
                                 lessons[curLesson][curSub].push({ speaker: bStr, text: cStr, pinyin: dStr, meaningVi: eStr });
                             }
                         } else if (cStr) {
-                            // Không có nhân vật nhưng có nội dung => câu dẫn cảnh đứng riêng, đệm lại chờ đoạn kế tiếp
-                            pendingContext = { hanzi: cStr, pinyin: dStr, meaningVi: eStr };
+                            // Không có nhân vật nhưng có nội dung => 2 khả năng cần phân biệt:
+                            //  (1) Đoạn hiện tại (curLesson/curSub) CHƯA có câu thoại nào (chỉ có câu dẫn cảnh
+                            //      lấy từ dòng đánh dấu) => đây chính là NỘI DUNG THẬT của đoạn (kiểu đoạn văn
+                            //      tường thuật / tin nhắn không có nhân vật, ví dụ đoạn X.4) => đẩy thẳng vào lessons.
+                            //  (2) Đoạn hiện tại ĐÃ có câu thoại thật => dòng này là câu dẫn cảnh đứng riêng,
+                            //      thuộc về đoạn KẾ TIẾP (kiểu 2) => đệm lại (pendingContext) như cũ.
+                            const curHasLines = curLesson !== null && curSub !== null &&
+                                lessons[curLesson] && lessons[curLesson][curSub] && lessons[curLesson][curSub].length > 0;
+                            if (curLesson !== null && curSub !== null && !curHasLines) {
+                                lessons[curLesson][curSub].push({ speaker: '', text: cStr, pinyin: dStr, meaningVi: eStr });
+                            } else {
+                                pendingContext = { hanzi: cStr, pinyin: dStr, meaningVi: eStr };
+                            }
                         }
                         return;
                     }
@@ -4421,7 +4432,9 @@
             const label = document.getElementById('dialogue-title-label');
             if (!label) return;
             const title = appState.dialogueLesson !== null ? getDialogueLessonTitle(appState.dialogueHsk, appState.dialogueLesson) : null;
-            label.textContent = (title && title.hanzi) ? title.hanzi : 'Hội Thoại';
+            // Tên đoạn hội thoại chỉ hiển thị tiếng Việt (lấy từ dòng đầu tiên của bài, cột nghĩa tiếng Việt),
+            // áp dụng cho cả HSK1/HSK2/HSK3 vì dùng chung hàm này.
+            label.textContent = (title && title.meaningVi) ? title.meaningVi : 'Hội Thoại';
         }
 
         function renderDialogueLessonDropdown() {
@@ -4596,7 +4609,7 @@
                     const meaningHiddenClass = appState.dialogueShowMeaning ? '' : 'hidden';
                     return `
                     <div class="flex flex-col gap-1 max-w-[85%] ${'self-start'}">
-                        <span class="text-[11px] font-bold text-brand-500 px-1">${escapeHtml(l.speaker)}</span>
+                        ${l.speaker ? `<span class="text-[11px] font-bold text-brand-500 px-1">${escapeHtml(l.speaker)}</span>` : ''}
                         <div class="flex items-start gap-2">
                             <div class="${c.bg} ${c.text} rounded-2xl rounded-tl-sm px-4 py-2.5 shadow-sm">
                                 ${pinyinText ? `<p class="dialogue-pinyin-line ${pinyinHiddenClass} text-xs sm:text-sm font-semibold text-brand-500/80 mb-0.5 tracking-wide">${escapeHtml(pinyinText)}</p>` : ''}
