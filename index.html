@@ -2185,7 +2185,7 @@
 
     <main id="app-main-content" class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col gap-6">
 
-        <div id="top-filter-bar" class="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 bg-white/80 p-3 rounded-2xl border border-brand-200/80 shadow-xs">
+        <div id="top-filter-bar" class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white/80 p-3 rounded-2xl border border-brand-200/80 shadow-xs">
             
             <div class="hidden md:flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none font-medium">
                 <button data-mode="home" class="tab-btn px-3 py-2 rounded-xl text-sm font-semibold text-brand-800/70 hover:text-brand-900 hover:bg-brand-50 transition flex items-center gap-2 whitespace-nowrap">
@@ -2221,7 +2221,7 @@
             <div class="flex items-center gap-2">
                 <span class="text-xs font-bold text-brand-800 uppercase tracking-wider hidden sm:inline">Sổ tay:</span>
                 <div class="relative" id="hsk-dropdown-wrapper">
-                    <button type="button" id="hsk-dropdown-btn" class="bg-brand-50 border border-brand-200 text-brand-950 text-sm font-medium rounded-xl px-3.5 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none cursor-pointer w-full sm:w-auto min-w-[110px] flex items-center justify-between gap-2">
+                    <button type="button" id="hsk-dropdown-btn" class="bg-brand-50 border border-brand-200 text-brand-950 text-sm font-medium rounded-xl px-3.5 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none cursor-pointer w-auto min-w-[110px] flex items-center justify-between gap-2">
                         <span id="hsk-dropdown-label">HSK 1</span>
                         <i class="fa-solid fa-chevron-down text-xs text-brand-400"></i>
                     </button>
@@ -2507,7 +2507,7 @@
                     </div>
                 </div>
 
-                <div class="perspective-1000 w-full h-[480px] sm:h-[420px] cursor-pointer group relative" id="flashcard-element">
+                <div class="perspective-1000 w-full h-[min(62svh,380px)] sm:h-[420px] cursor-pointer group relative" id="flashcard-element">
                     <span id="card-seq-badge" class="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20 bg-white border border-brand-300 text-brand-700 text-xs font-bold px-3.5 py-1 rounded-full shadow-sm cursor-pointer hover:border-brand-500 hover:bg-brand-50 transition select-none" title="Click để nhập số trang">
                         1
                     </span>
